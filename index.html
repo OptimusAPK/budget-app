@@ -9,72 +9,77 @@
 </head>
 <body>
 
-<h2>💰 Collaborative Budget App</h2>
+<div class="app-container">
 
-<!-- LOGIN -->
-<div id="loginSection" class="card">
-  <button onclick="loginWithGoogle()">Login with Google</button>
-  <button onclick="toggleEmail()">Login with Email</button>
+  <h2>💰 Anupam & Astha Budget App</h2>
 
-  <div id="emailBox" style="display:none">
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="emailLogin()">Login</button>
-    <button onclick="emailSignup()">Sign Up</button>
-  </div>
-</div>
+  <!-- LOGIN -->
+  <div id="loginSection" class="card">
+    <button onclick="loginWithGoogle()">Login with Google</button>
+    <button onclick="toggleEmail()">Login with Email</button>
 
-<p id="userInfo"></p>
-
-<!-- APP -->
-<div id="appSection" style="display:none">
-
-  <div class="card">
-    <select id="budgetSelect" onchange="onBudgetChange()">
-      <option disabled selected>Select Budget</option>
-    </select>
+    <div id="emailBox">
+      <input id="email" type="email" placeholder="Email">
+      <input id="password" type="password" placeholder="Password">
+      <button onclick="emailLogin()">Login</button>
+      <button onclick="emailSignup()">Sign Up</button>
+    </div>
   </div>
 
-  <div class="card" id="newBudgetCard">
-    <input id="newBudgetName" placeholder="New Budget Name">
-    <button onclick="createBudget()">Create Budget</button>
+  <p id="userInfo"></p>
+
+  <!-- APP -->
+  <div id="appSection">
+
+    <div class="card">
+      <select id="budgetSelect" onchange="onBudgetChange()">
+        <option disabled selected>Select Budget</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <input id="newBudgetName" placeholder="New Budget Name">
+      <button onclick="createBudget()">Create Budget</button>
+    </div>
+
+    <div class="card">
+      <select id="usersDropdown">
+        <option disabled selected>Add user</option>
+      </select>
+      <button onclick="addUser()">Add User</button>
+    </div>
+
+    <h3 id="currentBudget">No Budget Selected</h3>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="transactions"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <input id="desc" placeholder="Description">
+      <select id="cat">
+        <option>Food</option>
+        <option>Rent</option>
+        <option>Travel</option>
+        <option>Other</option>
+      </select>
+      <input id="amt" type="number" placeholder="Amount">
+      <button onclick="addTransaction()">Add Transaction</button>
+    </div>
+
+    <button class="logout" onclick="logout()">Logout</button>
+
   </div>
-
-  <div class="card" id="addUserCard">
-    <select id="usersDropdown">
-      <option disabled selected>Add user</option>
-    </select>
-    <button onclick="addUser()">Add</button>
-  </div>
-
-  <h3 id="currentBudget">No Budget Selected</h3>
-
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="transactions"></tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <input id="desc" placeholder="Description">
-    <select id="cat">
-      <option>Food</option>
-      <option>Rent</option>
-      <option>Travel</option>
-      <option>Other</option>
-    </select>
-    <input id="amt" type="number" placeholder="Amount">
-    <button onclick="addTransaction()">Add</button>
-  </div>
-
 </div>
 
 <!-- Firebase -->

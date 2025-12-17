@@ -1,4 +1,3 @@
-// Firebase config
 firebase.initializeApp({
   apiKey: "AIzaSyAE0DpuMOtf6gcMTNTh22jOPaovXSzKYBU",
   authDomain: "budget-app-193ef.firebaseapp.com",
@@ -8,27 +7,24 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
 let user, budgetId, unsubscribe;
 
-// ---------- AUTH ----------
 function loginWithGoogle() {
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 }
 
 function toggleEmail() {
-  document.getElementById("emailBox").style.display = "block";
+  emailBox.style.display = "block";
 }
 
 function emailLogin() {
-  auth.signInWithEmailAndPassword(
-    email.value, password.value
-  );
+  auth.signInWithEmailAndPassword(email.value, password.value);
 }
 
 function emailSignup() {
-  auth.createUserWithEmailAndPassword(
-    email.value, password.value
-  );
+  auth.createUserWithEmailAndPassword(email.value, password.value);
 }
 
 auth.onAuthStateChanged(u => {
@@ -49,23 +45,40 @@ auth.onAuthStateChanged(u => {
   loadUsers();
 });
 
-// ---------- BUDGETS ----------
+function logout() {
+  localStorage.removeItem("lastBudgetId");
+  auth.signOut();
+  location.reload();
+}
+
 function loadBudgets() {
   db.collection("budgets")
     .where("members", "array-contains", user.uid)
     .onSnapshot(snap => {
-      budgetSelect.innerHTML = `<option disabled selected>Select Budget</option>`;
+      budgetSelect.innerHTML = `<option disabled>Select Budget</option>`;
+      let last = localStorage.getItem("lastBudgetId");
+
       snap.forEach(doc => {
-        budgetSelect.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
+        let opt = document.createElement("option");
+        opt.value = doc.id;
+        opt.textContent = doc.data().name;
+        if (doc.id === last) {
+          opt.selected = true;
+          budgetId = doc.id;
+          listenTransactions();
+          currentBudget.innerText = "Budget: " + doc.data().name;
+        }
+        budgetSelect.appendChild(opt);
       });
+
       budgetSelect.innerHTML += `<option value="new">➕ Create New</option>`;
     });
 }
 
 function onBudgetChange() {
   if (budgetSelect.value === "new") return;
-
   budgetId = budgetSelect.value;
+  localStorage.setItem("lastBudgetId", budgetId);
   currentBudget.innerText = "Budget: " + budgetSelect.options[budgetSelect.selectedIndex].text;
   listenTransactions();
 }
@@ -79,7 +92,6 @@ function createBudget() {
   newBudgetName.value = "";
 }
 
-// ---------- USERS ----------
 function loadUsers() {
   db.collection("users").get().then(snap => {
     usersDropdown.innerHTML = `<option disabled selected>Add user</option>`;
@@ -96,17 +108,15 @@ function addUser() {
   });
 }
 
-// ---------- TRANSACTIONS ----------
 function listenTransactions() {
   if (unsubscribe) unsubscribe();
-  unsubscribe = db.collection("budgets")
-    .doc(budgetId)
+  unsubscribe = db.collection("budgets").doc(budgetId)
     .collection("transactions")
     .orderBy("createdAt")
     .onSnapshot(snap => {
       transactions.innerHTML = "";
       snap.forEach(doc => {
-        const t = doc.data();
+        let t = doc.data();
         transactions.innerHTML += `
           <tr>
             <td>${t.text}</td>
