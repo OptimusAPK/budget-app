@@ -9,14 +9,17 @@ const db = firebase.firestore();
 
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
-let user, budgetId, unsubscribe;
+let user = null;
+let budgetId = null;
+let unsubscribe = null;
 
+// ---------------- AUTH ----------------
 function loginWithGoogle() {
   auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 }
 
 function toggleEmail() {
-  emailBox.style.display = "block";
+  document.getElementById("emailBox").style.display = "block";
 }
 
 function emailLogin() {
@@ -27,8 +30,20 @@ function emailSignup() {
   auth.createUserWithEmailAndPassword(email.value, password.value);
 }
 
+function logout() {
+  localStorage.removeItem("lastBudgetId");
+  auth.signOut();
+}
+
+// -------- AUTH STATE HANDLER ----------
 auth.onAuthStateChanged(u => {
-  if (!u) return;
+  if (!u) {
+    loginSection.style.display = "block";
+    appSection.style.display = "none";
+    userInfo.innerText = "";
+    return;
+  }
+
   user = u;
 
   db.collection("users").doc(user.uid).set({
@@ -45,29 +60,27 @@ auth.onAuthStateChanged(u => {
   loadUsers();
 });
 
-function logout() {
-  localStorage.removeItem("lastBudgetId");
-  auth.signOut();
-  location.reload();
-}
-
+// ------------- BUDGETS ---------------
 function loadBudgets() {
   db.collection("budgets")
     .where("members", "array-contains", user.uid)
     .onSnapshot(snap => {
       budgetSelect.innerHTML = `<option disabled>Select Budget</option>`;
-      let last = localStorage.getItem("lastBudgetId");
+
+      const last = localStorage.getItem("lastBudgetId");
 
       snap.forEach(doc => {
-        let opt = document.createElement("option");
+        const opt = document.createElement("option");
         opt.value = doc.id;
         opt.textContent = doc.data().name;
+
         if (doc.id === last) {
           opt.selected = true;
           budgetId = doc.id;
-          listenTransactions();
           currentBudget.innerText = "Budget: " + doc.data().name;
+          listenTransactions();
         }
+
         budgetSelect.appendChild(opt);
       });
 
@@ -79,44 +92,55 @@ function onBudgetChange() {
   if (budgetSelect.value === "new") return;
   budgetId = budgetSelect.value;
   localStorage.setItem("lastBudgetId", budgetId);
-  currentBudget.innerText = "Budget: " + budgetSelect.options[budgetSelect.selectedIndex].text;
+  currentBudget.innerText =
+    "Budget: " + budgetSelect.options[budgetSelect.selectedIndex].text;
   listenTransactions();
 }
 
 function createBudget() {
+  if (!newBudgetName.value) return alert("Enter budget name");
+
   db.collection("budgets").add({
     name: newBudgetName.value,
     ownerId: user.uid,
     members: [user.uid]
   });
+
   newBudgetName.value = "";
 }
 
+// ------------- USERS -----------------
 function loadUsers() {
   db.collection("users").get().then(snap => {
     usersDropdown.innerHTML = `<option disabled selected>Add user</option>`;
     snap.forEach(d => {
-      if (d.id !== user.uid)
-        usersDropdown.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+      if (d.id !== user.uid) {
+        const name = d.data().name || d.data().email;
+        usersDropdown.innerHTML += `<option value="${d.id}">${name}</option>`;
+      }
     });
   });
 }
 
 function addUser() {
+  if (!budgetId) return alert("Select a budget");
+
   db.collection("budgets").doc(budgetId).update({
     members: firebase.firestore.FieldValue.arrayUnion(usersDropdown.value)
   });
 }
 
+// ----------- TRANSACTIONS -------------
 function listenTransactions() {
   if (unsubscribe) unsubscribe();
+
   unsubscribe = db.collection("budgets").doc(budgetId)
     .collection("transactions")
     .orderBy("createdAt")
     .onSnapshot(snap => {
       transactions.innerHTML = "";
       snap.forEach(doc => {
-        let t = doc.data();
+        const t = doc.data();
         transactions.innerHTML += `
           <tr>
             <td>${t.text}</td>
@@ -129,6 +153,8 @@ function listenTransactions() {
 }
 
 function addTransaction() {
+  if (!budgetId) return alert("Select a budget");
+
   db.collection("budgets").doc(budgetId)
     .collection("transactions")
     .add({
@@ -138,7 +164,9 @@ function addTransaction() {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       by: user.uid
     });
-  desc.value = amt.value = "";
+
+  desc.value = "";
+  amt.value = "";
 }
 
 function delTx(id) {
