@@ -1,9 +1,13 @@
-// 🔥 Firebase Config (REPLACE WITH YOUR OWN)
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-};
+ const firebaseConfig = {
+    apiKey: "AIzaSyAE0DpuMOtf6gcMTNTh22jOPaovXSzKYBU",
+    authDomain: "budget-app-193ef.firebaseapp.com",
+    projectId: "budget-app-193ef",
+    storageBucket: "budget-app-193ef.firebasestorage.app",
+    messagingSenderId: "875342270120",
+    appId: "1:875342270120:web:e5304dae0d056552217c9d",
+    measurementId: "G-YYQDZR9YHV"
+  };
+
 
 firebase.initializeApp(firebaseConfig);
 
@@ -12,6 +16,7 @@ const db = firebase.firestore();
 
 let transactions = [];
 let userId = null;
+let budgetId = null;
 
 // 🔐 Login
 function login() {
@@ -25,41 +30,102 @@ auth.onAuthStateChanged(user => {
     userId = user.uid;
     document.getElementById("userInfo").innerText =
       `Logged in as ${user.displayName}`;
-    loadData();
   }
 });
 
-// 💾 Add Transaction
+// 👥 Join or Create Budget
+function joinBudget() {
+  const input = document.getElementById("budgetIdInput").value.trim();
+  if (!input || !userId) return;
+
+  budgetId = input;
+  document.getElementById("currentBudget").innerText = budgetId;
+
+  const budgetRef = db.collection("budgets").doc(budgetId);
+
+  budgetRef.get().then(doc => {
+    if (!doc.exists) {
+      // Create new shared budget
+      budgetRef.set({
+        ownerId: userId,
+        members: [userId],
+        transactions: []
+      });
+    } else {
+      // Join existing budget
+      budgetRef.update({
+        members: firebase.firestore.FieldValue.arrayUnion(userId)
+      });
+    }
+    listenToBudget();
+  });
+}
+
+// 🔄 Real-time Listener
+function listenToBudget() {
+  db.collection("budgets").doc(budgetId)
+    .onSnapshot(doc => {
+      if (doc.exists) {
+        transactions = doc.data().transactions || [];
+        updateUI();
+      }
+    });
+}
+
+// ➕ Add Transaction
 function addTransaction() {
+  if (!budgetId) return;
+
   const text = document.getElementById("text").value;
   const amount = +document.getElementById("amount").value;
   const category = document.getElementById("category").value;
 
-  if (!text || amount === 0 || !userId) return;
+  if (!text || amount === 0) return;
 
-  transactions.push({ text, amount, category });
+  transactions.push({
+    id: Date.now(),
+    text,
+    amount,
+    category
+  });
+
   saveData();
+  updateUI();
 
   document.getElementById("text").value = "";
   document.getElementById("amount").value = "";
+}
 
+// ✏️ Edit Transaction
+function editTransaction(id) {
+  const t = transactions.find(t => t.id === id);
+  if (!t) return;
+
+  const newText = prompt("Edit description:", t.text);
+  const newAmount = prompt("Edit amount:", t.amount);
+
+  if (newText === null || newAmount === null) return;
+
+  t.text = newText;
+  t.amount = +newAmount;
+
+  saveData();
+  updateUI();
+}
+
+// 🗑 Delete Transaction
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  saveData();
   updateUI();
 }
 
 // ☁️ Save to Firestore
 function saveData() {
-  db.collection("budgets").doc(userId).set({
-    transactions
-  });
-}
+  if (!budgetId) return;
 
-// ☁️ Load from Firestore
-function loadData() {
-  db.collection("budgets").doc(userId).get().then(doc => {
-    if (doc.exists) {
-      transactions = doc.data().transactions || [];
-      updateUI();
-    }
+  db.collection("budgets").doc(budgetId).update({
+    transactions
   });
 }
 
@@ -81,7 +147,11 @@ function updateUI() {
         ${t.text}
         <small>${t.category}</small>
       </div>
-      <span>$${t.amount}</span>
+      <div class="actions">
+        <span>$${t.amount}</span>
+        <button onclick="editTransaction(${t.id})">✏️</button>
+        <button onclick="deleteTransaction(${t.id})">🗑</button>
+      </div>
     `;
 
     list.appendChild(li);

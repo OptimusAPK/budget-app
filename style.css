@@ -1,6 +1,4 @@
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   font-family: Arial, sans-serif;
@@ -18,9 +16,7 @@ body {
   box-shadow: 0 0 12px rgba(0,0,0,0.1);
 }
 
-h1, h2 {
-  text-align: center;
-}
+h1, h2 { text-align: center; }
 
 #loginBtn {
   width: 100%;
@@ -60,26 +56,20 @@ li {
   border-right: 5px solid;
 }
 
-.plus {
-  border-color: green;
+.plus { border-color: green; }
+.minus { border-color: red; }
+
+.actions button {
+  margin-left: 4px;
+  font-size: 12px;
+  cursor: pointer;
 }
 
-.minus {
-  border-color: red;
-}
+small { color: gray; }
 
-small {
-  display: block;
-  color: gray;
-}
-
-/* 📱 Mobile-first */
+/* Mobile */
 @media (max-width: 480px) {
-  body {
-    margin: 10px;
-  }
-
-  .container {
-    width: 100%;
-  }
+  body { margin: 10px; }
+  .container { width: 100%; }
+  .form { flex-direction: column; }
 }
