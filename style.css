@@ -18,7 +18,7 @@ body {
 
 h1, h2 { text-align: center; }
 
-#loginBtn {
+#loginBtn, #googleLoginBtn, #emailLoginBtn, #emailSignupBtn {
   width: 100%;
   padding: 8px;
   margin-bottom: 10px;

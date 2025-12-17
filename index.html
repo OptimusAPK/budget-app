@@ -11,12 +11,21 @@
 <div class="container">
   <h1>💰 Collaborative Budget Tracker</h1>
 
-  <!-- Login -->
+  <!-- LOGIN SECTION -->
   <div id="loginSection">
-    <button id="loginBtn">Login with Google</button>
+    <h3>Login</h3>
+    <button id="googleLoginBtn">Login with Google</button>
+
+    <hr>
+
+    <h4>Email Login</h4>
+    <input type="email" id="emailInput" placeholder="Email" />
+    <input type="password" id="passwordInput" placeholder="Password" />
+    <button id="emailLoginBtn">Login</button>
+    <button id="emailSignupBtn">Sign Up</button>
   </div>
 
-  <!-- Hidden after login -->
+  <!-- APP SECTION (hidden until login) -->
   <div id="appSection" style="display:none;">
 
     <p id="userInfo"></p>

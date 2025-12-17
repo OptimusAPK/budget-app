@@ -17,27 +17,52 @@ let transactions = [];
 let userId = null;
 let budgetId = null;
 
-// 🔐 Login
-document.getElementById("loginBtn").addEventListener("click", () => {
+// ---------------- LOGIN ----------------
+
+// Google Login
+document.getElementById("googleLoginBtn").addEventListener("click", () => {
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider);
 });
 
-// 👤 Auth State
+// Email/Password Login
+document.getElementById("emailLoginBtn").addEventListener("click", () => {
+  const email = document.getElementById("emailInput").value;
+  const password = document.getElementById("passwordInput").value;
+
+  if (!email || !password) return alert("Enter email and password");
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(error => alert(error.message));
+});
+
+// Email/Password Signup
+document.getElementById("emailSignupBtn").addEventListener("click", () => {
+  const email = document.getElementById("emailInput").value;
+  const password = document.getElementById("passwordInput").value;
+
+  if (!email || !password) return alert("Enter email and password");
+
+  auth.createUserWithEmailAndPassword(email, password)
+    .catch(error => alert(error.message));
+});
+
+// Auth state change
 auth.onAuthStateChanged(user => {
   if (user) {
     userId = user.uid;
-    document.getElementById("userInfo").innerText = `Logged in as ${user.displayName}`;
+    document.getElementById("userInfo").innerText = `Logged in as ${user.email || user.displayName}`;
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("appSection").style.display = "block";
   } else {
-    // Ensure app is hidden if not logged in
     document.getElementById("loginSection").style.display = "block";
     document.getElementById("appSection").style.display = "none";
   }
 });
 
-// 👥 Join or Create Budget
+// ---------------- BUDGET & TRANSACTIONS ----------------
+
+// Join or Create Budget
 function joinBudget() {
   if (!userId) return alert("Login first!");
   
@@ -65,7 +90,7 @@ function joinBudget() {
   });
 }
 
-// 🔄 Real-time Listener
+// Real-time listener
 function listenToBudget() {
   db.collection("budgets").doc(budgetId)
     .onSnapshot(doc => {
@@ -76,7 +101,7 @@ function listenToBudget() {
     });
 }
 
-// ➕ Add Transaction
+// Add transaction
 function addTransaction() {
   if (!userId || !budgetId) return alert("Login and join a budget first!");
 
@@ -100,7 +125,7 @@ function addTransaction() {
   document.getElementById("amount").value = "";
 }
 
-// ✏️ Edit Transaction
+// Edit transaction
 function editTransaction(id) {
   if (!userId || !budgetId) return alert("Login and join a budget first!");
 
@@ -119,7 +144,7 @@ function editTransaction(id) {
   updateUI();
 }
 
-// 🗑 Delete Transaction
+// Delete transaction
 function deleteTransaction(id) {
   if (!userId || !budgetId) return alert("Login and join a budget first!");
 
@@ -128,16 +153,15 @@ function deleteTransaction(id) {
   updateUI();
 }
 
-// ☁️ Save to Firestore
+// Save to Firestore
 function saveData() {
   if (!budgetId) return;
-
   db.collection("budgets").doc(budgetId).update({
     transactions
   });
 }
 
-// 🔄 Update UI
+// Update UI
 function updateUI() {
   const list = document.getElementById("list");
   list.innerHTML = "";
