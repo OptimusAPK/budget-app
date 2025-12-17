@@ -9,20 +9,21 @@ const firebaseConfig = {
   measurementId: "G-YYQDZR9YHV"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let userId = null;
-let budgetId = null;
-let budgets = [];
-let transactions = [];
-let allUsers = []; // all users in the app
+// Global state
+let currentUser = null;
+let currentBudgetId = null;
 
-// --------- Authentication ---------
+// --------------------- Auth -----------------------
 function loginWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(err => alert(err.message));
+  auth.signInWithPopup(provider)
+    .then(res => setupUser(res.user))
+    .catch(console.error);
 }
 
 function showEmailLogin() {
@@ -32,262 +33,161 @@ function showEmailLogin() {
 function emailLogin() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, password).catch(err => alert(err.message));
+  auth.signInWithEmailAndPassword(email, password)
+      .then(res => setupUser(res.user))
+      .catch(console.error);
 }
 
 function emailSignUp() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   auth.createUserWithEmailAndPassword(email, password)
-    .then(({ user }) => {
-      db.collection("users").doc(user.uid).set({ email: user.email, name: user.displayName || "" });
-    })
-    .catch(err => alert(err.message));
+      .then(res => setupUser(res.user))
+      .catch(console.error);
 }
 
-// --------- Auth state listener ---------
-auth.onAuthStateChanged(user => {
-  if (user) {
-    userId = user.uid;
-    db.collection("users").doc(userId).set({ email: user.email, name: user.displayName || "" }, { merge: true });
-
-    document.getElementById("userInfo").innerText = `Logged in as ${user.email || user.displayName}`;
-    document.getElementById("loginSection").style.display = "none";
-    document.getElementById("appSection").style.display = "block";
-
-    fetchUserBudgets();
-  } else {
-    userId = null;
-    budgetId = null;
-    budgets = [];
-    transactions = [];
-    document.getElementById("userInfo").innerText = "";
-    document.getElementById("loginSection").style.display = "block";
-    document.getElementById("appSection").style.display = "none";
-    clearTransactionsTable();
-    updateBudgetSelect();
-  }
-});
-
-// --------- Fetch budgets user belongs to ---------
-function fetchUserBudgets() {
-  if (!userId) return;
-  db.collection("budgets").where("members", "array-contains", userId).get()
-    .then(snapshot => {
-      budgets = [];
-      snapshot.forEach(doc => budgets.push({ id: doc.id, ...doc.data() }));
-      updateBudgetSelect();
-    }).catch(err => alert(err.message));
+function setupUser(user) {
+  currentUser = user;
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("appSection").style.display = "block";
+  document.getElementById("userInfo").innerText = `Hello, ${user.displayName || user.email}`;
+  saveUserToFirestore();
+  fetchBudgets();
+  fetchAllUsers();
 }
 
-// --------- Update budget dropdown ---------
-function updateBudgetSelect() {
-  const select = document.getElementById("budgetSelect");
-  select.innerHTML = "";
+// --------------------- Firestore -----------------------
+function saveUserToFirestore() {
+  db.collection("users").doc(currentUser.uid).set({
+    name: currentUser.displayName || currentUser.email
+  }, { merge: true });
+}
 
-  if (budgets.length === 0) {
-    const createOption = document.createElement("option");
-    createOption.value = "create_new";
-    createOption.text = "Create New Budget";
-    createOption.selected = true;
-    select.appendChild(createOption);
-    document.getElementById("newBudgetSection").style.display = "block";
-  } else {
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.text = "Select a budget";
-    defaultOption.disabled = true;
-    defaultOption.selected = true;
-    select.appendChild(defaultOption);
-
-    budgets.forEach(b => {
-      const option = document.createElement("option");
-      option.value = b.id;
-      option.text = b.name || b.id;
-      select.appendChild(option);
+// Fetch budgets where user is a member
+function fetchBudgets() {
+  db.collection("budgets")
+    .where("members", "array-contains", currentUser.uid)
+    .onSnapshot(snapshot => {
+      const select = document.getElementById("budgetSelect");
+      select.innerHTML = `<option value="" disabled selected>Select Budget</option>`;
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.innerText = data.name;
+        select.appendChild(option);
+      });
+      // Add "Create New" option
+      const newOption = document.createElement("option");
+      newOption.value = "create_new";
+      newOption.innerText = "➕ Create New Budget";
+      select.appendChild(newOption);
     });
-
-    const createOption = document.createElement("option");
-    createOption.value = "create_new";
-    createOption.text = "Create New Budget";
-    select.appendChild(createOption);
-
-    document.getElementById("newBudgetSection").style.display = "none";
-  }
-
-  budgetId = null;
-  document.getElementById("currentBudget").innerText = "None";
-  clearTransactionsTable();
 }
 
-// --------- Handle budget selection change ---------
+// Fetch all users for adding to budget
+function fetchAllUsers() {
+  db.collection("users").get().then(snapshot => {
+    const select = document.getElementById("allUsersSelect");
+    select.innerHTML = `<option value="" disabled selected>Select user to add</option>`;
+    snapshot.forEach(doc => {
+      const option = document.createElement("option");
+      option.value = doc.id;
+      option.innerText = doc.data().name;
+      if(doc.id !== currentUser.uid) select.appendChild(option);
+    });
+  });
+}
+
+// Handle budget selection
 function handleBudgetChange() {
-  const val = document.getElementById("budgetSelect").value;
-  if (val === "create_new") {
-    document.getElementById("newBudgetSection").style.display = "block";
-    document.getElementById("addUserSection").style.display = "none";
-    budgetId = null;
+  const select = document.getElementById("budgetSelect");
+  const value = select.value;
+  if(value === "create_new") {
+    document.getElementById("newBudgetSection").style.display = "flex";
+    currentBudgetId = null;
+    document.getElementById("transactionsTableBody").innerHTML = "";
     document.getElementById("currentBudget").innerText = "None";
-    clearTransactionsTable();
   } else {
     document.getElementById("newBudgetSection").style.display = "none";
-    document.getElementById("addUserSection").style.display = "block";
-    budgetId = val;
-    fetchAllUsers(); // populate dropdown
-    const selectedBudget = budgets.find(b => b.id === val);
-    document.getElementById("currentBudget").innerText = selectedBudget ? selectedBudget.name : val;
-    listenToBudget();
+    currentBudgetId = value;
+    db.collection("budgets").doc(currentBudgetId)
+      .get().then(doc => {
+        document.getElementById("currentBudget").innerText = doc.data().name;
+      });
+    fetchTransactions();
   }
 }
 
-// --------- Create new budget ---------
+// Create new budget
 function createNewBudget() {
   const name = document.getElementById("newBudgetName").value.trim();
-  if (!name) return alert("Enter a budget name");
-
-  const newBudgetRef = db.collection("budgets").doc();
-  newBudgetRef.set({ name, ownerId: userId, members: [userId], transactions: [] })
-    .then(() => {
-      budgetId = newBudgetRef.id;
-      document.getElementById("currentBudget").innerText = name;
-      document.getElementById("newBudgetSection").style.display = "none";
-      document.getElementById("newBudgetName").value = "";
-      fetchUserBudgets();
-      listenToBudget();
-    }).catch(err => alert(err.message));
+  if(!name) return alert("Enter a budget name");
+  db.collection("budgets").add({
+    name,
+    ownerId: currentUser.uid,
+    members: [currentUser.uid]
+  }).then(doc => {
+    currentBudgetId = doc.id;
+    document.getElementById("currentBudget").innerText = name;
+    document.getElementById("newBudgetName").value = "";
+    document.getElementById("newBudgetSection").style.display = "none";
+  }).catch(console.error);
 }
 
-// --------- Fetch all users for add-user dropdown ---------
-function fetchAllUsers() {
-  db.collection("users").get()
-    .then(snapshot => {
-      allUsers = [];
-      snapshot.forEach(doc => { 
-        if(doc.id !== userId) allUsers.push({ uid: doc.id, ...doc.data() });
-      });
-      updateUsersSelect();
-    }).catch(err => alert(err.message));
-}
-
-function updateUsersSelect() {
-  const select = document.getElementById("allUsersSelect");
-  select.innerHTML = '<option value="" disabled selected>Select user to add</option>';
-  allUsers.forEach(u => {
-    const option = document.createElement("option");
-    option.value = u.uid;
-    option.text = u.email;
-    select.appendChild(option);
-  });
-}
-
-// --------- Add user to budget ---------
+// Add user to current budget
 function addUserToBudget() {
-  const uid = document.getElementById("allUsersSelect").value;
-  if (!uid) return alert("Select a user to add");
-
-  db.collection("budgets").doc(budgetId).update({
-    members: firebase.firestore.FieldValue.arrayUnion(uid)
-  }).then(() => {
-    alert("User added to budget!");
-    document.getElementById("allUsersSelect").value = "";
-  }).catch(err => alert(err.message));
+  const userId = document.getElementById("allUsersSelect").value;
+  if(!userId || !currentBudgetId) return;
+  const budgetRef = db.collection("budgets").doc(currentBudgetId);
+  budgetRef.update({
+    members: firebase.firestore.FieldValue.arrayUnion(userId)
+  }).then(() => fetchBudgets())
+    .catch(console.error);
 }
 
-// --------- Listen to budget transactions ---------
-let unsubscribeBudget = null;
-function listenToBudget() {
-  if (!budgetId) return;
-
-  if (unsubscribeBudget) unsubscribeBudget();
-  const budgetRef = db.collection("budgets").doc(budgetId);
-
-  unsubscribeBudget = budgetRef.onSnapshot(doc => {
-    if (doc.exists) {
-      transactions = doc.data().transactions || [];
-      updateTransactionsTable();
-    } else {
-      transactions = [];
-      updateTransactionsTable();
-    }
-  });
+// --------------------- Transactions -----------------------
+function fetchTransactions() {
+  if(!currentBudgetId) return;
+  db.collection("budgets").doc(currentBudgetId)
+    .collection("transactions")
+    .onSnapshot(snapshot => {
+      const tbody = document.getElementById("transactionsTableBody");
+      tbody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const tr = document.createElement("tr");
+        const data = doc.data();
+        tr.innerHTML = `
+          <td>${data.text}</td>
+          <td>${data.category}</td>
+          <td>${data.amount}</td>
+          <td>
+            <button onclick="deleteTransaction('${doc.id}')">🗑️</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    });
 }
 
-// --------- Add transaction ---------
 function addTransaction() {
-  if (!userId || !budgetId) return alert("Select or create a budget first!");
+  if(!currentBudgetId) return;
   const text = document.getElementById("text").value.trim();
-  const amount = Number(document.getElementById("amount").value);
   const category = document.getElementById("category").value;
-  if (!text || !amount) return alert("Enter valid description and amount");
-
-  transactions.push({ id: Date.now(), text, amount, category });
-  saveData();
-  updateTransactionsTable();
-
-  document.getElementById("text").value = "";
-  document.getElementById("amount").value = "";
+  const amount = Number(document.getElementById("amount").value);
+  if(!text || !category || !amount) return alert("Fill all fields");
+  db.collection("budgets").doc(currentBudgetId)
+    .collection("transactions")
+    .add({ text, category, amount })
+    .then(() => {
+      document.getElementById("text").value = "";
+      document.getElementById("amount").value = "";
+    })
+    .catch(console.error);
 }
 
-// --------- Save transactions ---------
-function saveData() {
-  if (!budgetId) return;
-  db.collection("budgets").doc(budgetId).set({ transactions }, { merge: true })
-    .catch(err => alert(err.message));
-}
-
-// --------- Update transactions table ---------
-function updateTransactionsTable() {
-  const tbody = document.getElementById("transactionsTableBody");
-  tbody.innerHTML = "";
-  transactions.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(t.text)}</td>
-      <td>${escapeHtml(t.category)}</td>
-      <td>${t.amount}</td>
-      <td>
-        <button onclick="editTransaction(${t.id})">✏️</button>
-        <button onclick="deleteTransaction(${t.id})">🗑</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-// --------- Clear table ---------
-function clearTransactionsTable() {
-  document.getElementById("transactionsTableBody").innerHTML = "";
-}
-
-// --------- Delete transaction ---------
 function deleteTransaction(id) {
-  if (!budgetId) return;
-  transactions = transactions.filter(t => t.id !== id);
-  saveData();
-  updateTransactionsTable();
-}
-
-// --------- Edit transaction ---------
-function editTransaction(id) {
-  const tx = transactions.find(t => t.id === id);
-  if (!tx) return alert("Transaction not found");
-  const newText = prompt("Edit description:", tx.text);
-  if (newText === null) return;
-  const newAmountStr = prompt("Edit amount:", tx.amount);
-  if (newAmountStr === null) return;
-  const newAmount = Number(newAmountStr);
-  if (isNaN(newAmount) || newAmount === 0) return alert("Invalid amount");
-  const newCategory = prompt("Edit category (Food, Rent, Travel, Other):", tx.category);
-  if (newCategory === null || !["Food","Rent","Travel","Other"].includes(newCategory)) return alert("Invalid category");
-
-  tx.text = newText.trim();
-  tx.amount = newAmount;
-  tx.category = newCategory;
-
-  saveData();
-  updateTransactionsTable();
-}
-
-// --------- Escape HTML ---------
-function escapeHtml(text) {
-  return text.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  if(!currentBudgetId) return;
+  db.collection("budgets").doc(currentBudgetId)
+    .collection("transactions").doc(id)
+    .delete().catch(console.error);
 }

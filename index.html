@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Funky Collaborative Budget App</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h2>💰Anupam & Astha Budget App</h2>
+  <h2>💰 Funky Collaborative Budget App</h2>
 
   <!-- Login Section -->
   <div id="loginSection" class="card">
@@ -37,13 +37,13 @@
     </div>
 
     <!-- New budget creation -->
-    <div class="card form" id="newBudgetSection" style="display:none;">
+    <div class="card form" id="newBudgetSection">
       <input type="text" id="newBudgetName" placeholder="Enter new budget name" />
       <button onclick="createNewBudget()">Create Budget</button>
     </div>
 
     <!-- Add user to budget -->
-    <div class="card form" id="addUserSection" style="display:none;">
+    <div class="card form" id="addUserSection">
       <select id="allUsersSelect">
         <option value="" disabled selected>Select user to add</option>
       </select>
