@@ -8,7 +8,6 @@
     measurementId: "G-YYQDZR9YHV"
   };
 
-
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
@@ -19,24 +18,31 @@ let userId = null;
 let budgetId = null;
 
 // 🔐 Login
-function login() {
+document.getElementById("loginBtn").addEventListener("click", () => {
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider);
-}
+});
 
 // 👤 Auth State
 auth.onAuthStateChanged(user => {
   if (user) {
     userId = user.uid;
-    document.getElementById("userInfo").innerText =
-      `Logged in as ${user.displayName}`;
+    document.getElementById("userInfo").innerText = `Logged in as ${user.displayName}`;
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("appSection").style.display = "block";
+  } else {
+    // Ensure app is hidden if not logged in
+    document.getElementById("loginSection").style.display = "block";
+    document.getElementById("appSection").style.display = "none";
   }
 });
 
 // 👥 Join or Create Budget
 function joinBudget() {
+  if (!userId) return alert("Login first!");
+  
   const input = document.getElementById("budgetIdInput").value.trim();
-  if (!input || !userId) return;
+  if (!input) return alert("Enter a Budget ID!");
 
   budgetId = input;
   document.getElementById("currentBudget").innerText = budgetId;
@@ -45,14 +51,12 @@ function joinBudget() {
 
   budgetRef.get().then(doc => {
     if (!doc.exists) {
-      // Create new shared budget
       budgetRef.set({
         ownerId: userId,
         members: [userId],
         transactions: []
       });
     } else {
-      // Join existing budget
       budgetRef.update({
         members: firebase.firestore.FieldValue.arrayUnion(userId)
       });
@@ -74,13 +78,13 @@ function listenToBudget() {
 
 // ➕ Add Transaction
 function addTransaction() {
-  if (!budgetId) return;
+  if (!userId || !budgetId) return alert("Login and join a budget first!");
 
   const text = document.getElementById("text").value;
   const amount = +document.getElementById("amount").value;
   const category = document.getElementById("category").value;
 
-  if (!text || amount === 0) return;
+  if (!text || amount === 0) return alert("Enter description and amount!");
 
   transactions.push({
     id: Date.now(),
@@ -98,6 +102,8 @@ function addTransaction() {
 
 // ✏️ Edit Transaction
 function editTransaction(id) {
+  if (!userId || !budgetId) return alert("Login and join a budget first!");
+
   const t = transactions.find(t => t.id === id);
   if (!t) return;
 
@@ -115,6 +121,8 @@ function editTransaction(id) {
 
 // 🗑 Delete Transaction
 function deleteTransaction(id) {
+  if (!userId || !budgetId) return alert("Login and join a budget first!");
+
   transactions = transactions.filter(t => t.id !== id);
   saveData();
   updateUI();

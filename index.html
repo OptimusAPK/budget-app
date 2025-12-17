@@ -8,11 +8,17 @@
 </head>
 <body>
 
-  <div class="container">
-    <h1>💰 Collaborative Budget Tracker</h1>
+<div class="container">
+  <h1>💰 Collaborative Budget Tracker</h1>
 
-    <!-- Login -->
-    <button id="loginBtn" onclick="login()">Login with Google</button>
+  <!-- Login -->
+  <div id="loginSection">
+    <button id="loginBtn">Login with Google</button>
+  </div>
+
+  <!-- Hidden after login -->
+  <div id="appSection" style="display:none;">
+
     <p id="userInfo"></p>
 
     <!-- Collaboration -->
@@ -38,13 +44,15 @@
     </div>
 
     <ul id="list"></ul>
+
   </div>
+</div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
