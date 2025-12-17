@@ -2,45 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Collaborative Budget Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Budget App with Firebase</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <h2>Budget App</h2>
 
-<div class="container">
-  <h1>💰 Collaborative Budget Tracker</h1>
-
-  <!-- LOGIN SECTION -->
+  <!-- Login section -->
   <div id="loginSection">
-    <h3>Login</h3>
-    <button id="googleLoginBtn">Login with Google</button>
+    <button onclick="loginWithGoogle()">Login with Google</button>
+    <button onclick="showEmailLogin()">Login with Email</button>
 
-    <hr>
-
-    <h4>Email Login</h4>
-    <input type="email" id="emailInput" placeholder="Email" />
-    <input type="password" id="passwordInput" placeholder="Password" />
-    <button id="emailLoginBtn">Login</button>
-    <button id="emailSignupBtn">Sign Up</button>
+    <div id="emailLoginSection" style="display:none; margin-top:10px;">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="emailLogin()">Login</button>
+      <button onclick="emailSignUp()">Sign Up</button>
+    </div>
   </div>
 
-  <!-- APP SECTION (hidden until login) -->
+  <p id="userInfo"></p>
+
+  <!-- Main app section -->
   <div id="appSection" style="display:none;">
 
-    <p id="userInfo"></p>
-
-    <!-- Collaboration -->
+    <!-- Budget selection -->
     <div class="form">
-      <input type="text" id="budgetIdInput" placeholder="Enter Budget ID to Join">
-      <button onclick="joinBudget()">Join / Create Budget</button>
+      <label for="budgetSelect">Select Budget:</label>
+      <select id="budgetSelect" onchange="handleBudgetChange()">
+        <option value="" disabled selected>Loading budgets...</option>
+      </select>
     </div>
-    <p><strong>Current Budget ID:</strong> <span id="currentBudget">None</span></p>
 
-    <h2>Balance: $<span id="balance">0</span></h2>
+    <!-- New budget creation (hidden by default) -->
+    <div class="form" id="newBudgetSection" style="display:none;">
+      <input type="text" id="newBudgetName" placeholder="Enter new budget name" />
+      <button onclick="createNewBudget()">Create Budget</button>
+    </div>
 
-    <!-- Transaction Form -->
-    <div class="form">
+    <p><strong>Current Budget:</strong> <span id="currentBudget">None</span></p>
+
+    <!-- Transactions table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="transactionsTableBody">
+        <!-- Transactions rows will go here -->
+      </tbody>
+    </table>
+
+    <!-- Add transaction form -->
+    <div class="form" style="margin-top: 15px;">
       <input type="text" id="text" placeholder="Description" />
       <select id="category">
         <option value="Food">🍔 Food</option>
@@ -52,16 +71,13 @@
       <button onclick="addTransaction()">Add Transaction</button>
     </div>
 
-    <ul id="list"></ul>
-
   </div>
-</div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,75 +1,26 @@
-* { box-sizing: border-box; }
-
 body {
   font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
+  max-width: 600px;
+  margin: auto;
+  padding: 10px;
 }
-
-.container {
-  background: #fff;
-  padding: 20px;
-  width: 380px;
-  border-radius: 8px;
-  box-shadow: 0 0 12px rgba(0,0,0,0.1);
-}
-
-h1, h2 { text-align: center; }
-
-#loginBtn, #googleLoginBtn, #emailLoginBtn, #emailSignupBtn {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
-
 input, select, button {
-  padding: 8px;
-  font-size: 14px;
+  padding: 6px;
+  margin-right: 6px;
 }
-
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+}
+th, td {
+  border: 1px solid #aaa;
+  padding: 8px;
+  text-align: left;
+}
 button {
   cursor: pointer;
-}
-
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  background: #fafafa;
-  padding: 10px;
-  margin: 6px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-right: 5px solid;
-}
-
-.plus { border-color: green; }
-.minus { border-color: red; }
-
-.actions button {
-  margin-left: 4px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-small { color: gray; }
-
-/* Mobile */
-@media (max-width: 480px) {
-  body { margin: 10px; }
-  .container { width: 100%; }
-  .form { flex-direction: column; }
 }

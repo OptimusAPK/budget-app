@@ -1,116 +1,226 @@
+// Your Firebase config (replace with your actual config)
 const firebaseConfig = {
   apiKey: "AIzaSyAE0DpuMOtf6gcMTNTh22jOPaovXSzKYBU",
   authDomain: "budget-app-193ef.firebaseapp.com",
   projectId: "budget-app-193ef",
-  storageBucket: "budget-app-193ef.appspot.com",    // <-- fixed here
+  storageBucket: "budget-app-193ef.appspot.com",
   messagingSenderId: "875342270120",
   appId: "1:875342270120:web:e5304dae0d056552217c9d",
   measurementId: "G-YYQDZR9YHV"
 };
 
-
 firebase.initializeApp(firebaseConfig);
-
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let transactions = [];
 let userId = null;
 let budgetId = null;
+let budgets = [];
+let transactions = [];
 
-// ---------------- LOGIN ----------------
+// --------- Authentication ---------
 
-// Google Login
-document.getElementById("googleLoginBtn").addEventListener("click", () => {
+function loginWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
-});
+  auth.signInWithPopup(provider).catch(err => {
+    alert("Google login error: " + err.message);
+  });
+}
 
-// Email/Password Login
-document.getElementById("emailLoginBtn").addEventListener("click", () => {
-  const email = document.getElementById("emailInput").value;
-  const password = document.getElementById("passwordInput").value;
+function showEmailLogin() {
+  document.getElementById("emailLoginSection").style.display = "block";
+}
 
-  if (!email || !password) return alert("Enter email and password");
+function emailLogin() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email, password).catch(err => {
+    alert("Email login error: " + err.message);
+  });
+}
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(error => alert(error.message));
-});
+function emailSignUp() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  auth.createUserWithEmailAndPassword(email, password).catch(err => {
+    alert("Sign up error: " + err.message);
+  });
+}
 
-// Email/Password Signup
-document.getElementById("emailSignupBtn").addEventListener("click", () => {
-  const email = document.getElementById("emailInput").value;
-  const password = document.getElementById("passwordInput").value;
+// --------- Auth state listener ---------
 
-  if (!email || !password) return alert("Enter email and password");
-
-  auth.createUserWithEmailAndPassword(email, password)
-    .catch(error => alert(error.message));
-});
-
-// Auth state change
 auth.onAuthStateChanged(user => {
   if (user) {
     userId = user.uid;
     document.getElementById("userInfo").innerText = `Logged in as ${user.email || user.displayName}`;
     document.getElementById("loginSection").style.display = "none";
     document.getElementById("appSection").style.display = "block";
+
+    fetchUserBudgets();
   } else {
+    userId = null;
+    budgetId = null;
+    budgets = [];
+    transactions = [];
+    document.getElementById("userInfo").innerText = "";
     document.getElementById("loginSection").style.display = "block";
     document.getElementById("appSection").style.display = "none";
+    clearTransactionsTable();
+    updateBudgetSelect();
   }
 });
 
-// ---------------- BUDGET & TRANSACTIONS ----------------
+// --------- Fetch budgets user belongs to ---------
 
-// Join or Create Budget
-function joinBudget() {
-  if (!userId) return alert("Login first!");
-  
-  const input = document.getElementById("budgetIdInput").value.trim();
-  if (!input) return alert("Enter a Budget ID!");
+function fetchUserBudgets() {
+  if (!userId) return;
 
-  budgetId = input;
-  document.getElementById("currentBudget").innerText = budgetId;
-
-  const budgetRef = db.collection("budgets").doc(budgetId);
-
-  budgetRef.get().then(doc => {
-    if (!doc.exists) {
-      budgetRef.set({
-        ownerId: userId,
-        members: [userId],
-        transactions: []
+  db.collection("budgets")
+    .where("members", "array-contains", userId)
+    .get()
+    .then(snapshot => {
+      budgets = [];
+      snapshot.forEach(doc => {
+        budgets.push({ id: doc.id, ...doc.data() });
       });
-    } else {
-      budgetRef.update({
-        members: firebase.firestore.FieldValue.arrayUnion(userId)
-      });
-    }
-    listenToBudget();
-  });
-}
 
-// Real-time listener
-function listenToBudget() {
-  db.collection("budgets").doc(budgetId)
-    .onSnapshot(doc => {
-      if (doc.exists) {
-        transactions = doc.data().transactions || [];
-        updateUI();
-      }
+      updateBudgetSelect();
+    })
+    .catch(err => {
+      alert("Error fetching budgets: " + err.message);
+      console.error(err);
     });
 }
 
-// Add transaction
-function addTransaction() {
-  if (!userId || !budgetId) return alert("Login and join a budget first!");
+// --------- Update the budget select dropdown ---------
 
-  const text = document.getElementById("text").value;
-  const amount = +document.getElementById("amount").value;
+function updateBudgetSelect() {
+  const select = document.getElementById("budgetSelect");
+  select.innerHTML = "";
+
+  if (budgets.length === 0) {
+    const createOption = document.createElement("option");
+    createOption.value = "create_new";
+    createOption.text = "Create New Budget";
+    createOption.selected = true;
+    select.appendChild(createOption);
+
+    document.getElementById("newBudgetSection").style.display = "block";
+  } else {
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.text = "Select a budget";
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    select.appendChild(defaultOption);
+
+    budgets.forEach(b => {
+      const option = document.createElement("option");
+      option.value = b.id;
+      option.text = b.name ? b.name + " (" + b.id + ")" : b.id;
+      select.appendChild(option);
+    });
+
+    const createOption = document.createElement("option");
+    createOption.value = "create_new";
+    createOption.text = "Create New Budget";
+    select.appendChild(createOption);
+
+    document.getElementById("newBudgetSection").style.display = "none";
+  }
+
+  // Reset budget and transactions display
+  budgetId = null;
+  document.getElementById("currentBudget").innerText = "None";
+  clearTransactionsTable();
+}
+
+// --------- Handle budget selection change ---------
+
+function handleBudgetChange() {
+  const select = document.getElementById("budgetSelect");
+  const val = select.value;
+
+  if (val === "create_new") {
+    document.getElementById("newBudgetSection").style.display = "block";
+    budgetId = null;
+    document.getElementById("currentBudget").innerText = "None";
+    clearTransactionsTable();
+  } else {
+    document.getElementById("newBudgetSection").style.display = "none";
+    budgetId = val;
+    document.getElementById("currentBudget").innerText = "";
+    // Find budget name to display nicely
+    const selectedBudget = budgets.find(b => b.id === val);
+    if (selectedBudget) {
+      document.getElementById("currentBudget").innerText = selectedBudget.name ? selectedBudget.name + " (" + budgetId + ")" : budgetId;
+    } else {
+      document.getElementById("currentBudget").innerText = budgetId;
+    }
+    listenToBudget();
+  }
+}
+
+// --------- Create new budget ---------
+
+function createNewBudget() {
+  const name = document.getElementById("newBudgetName").value.trim();
+  if (!name) return alert("Enter a budget name");
+
+  const newBudgetRef = db.collection("budgets").doc();
+
+  newBudgetRef.set({
+    name,
+    ownerId: userId,
+    members: [userId],
+    transactions: []
+  }).then(() => {
+    budgetId = newBudgetRef.id;
+    document.getElementById("currentBudget").innerText = name + " (" + budgetId + ")";
+    document.getElementById("newBudgetSection").style.display = "none";
+    document.getElementById("newBudgetName").value = "";
+
+    fetchUserBudgets();
+    listenToBudget();
+  }).catch(err => {
+    alert("Error creating budget: " + err.message);
+    console.error(err);
+  });
+}
+
+// --------- Listen to budget changes ---------
+
+let unsubscribeBudget = null;
+
+function listenToBudget() {
+  if (!budgetId) return;
+
+  if (unsubscribeBudget) {
+    unsubscribeBudget();
+  }
+
+  const budgetRef = db.collection("budgets").doc(budgetId);
+  unsubscribeBudget = budgetRef.onSnapshot(doc => {
+    if (doc.exists) {
+      transactions = doc.data().transactions || [];
+      updateTransactionsTable();
+    } else {
+      transactions = [];
+      updateTransactionsTable();
+    }
+  });
+}
+
+// --------- Add transaction ---------
+
+function addTransaction() {
+  if (!userId || !budgetId) return alert("Login and select or create a budget first!");
+
+  const text = document.getElementById("text").value.trim();
+  const amount = Number(document.getElementById("amount").value);
   const category = document.getElementById("category").value;
 
-  if (!text || amount === 0) return alert("Enter description and amount!");
+  if (!text || !amount) return alert("Enter valid description and amount!");
 
   transactions.push({
     id: Date.now(),
@@ -120,75 +230,95 @@ function addTransaction() {
   });
 
   saveData();
-  updateUI();
+
+  updateTransactionsTable();
 
   document.getElementById("text").value = "";
   document.getElementById("amount").value = "";
 }
 
-// Edit transaction
-function editTransaction(id) {
-  if (!userId || !budgetId) return alert("Login and join a budget first!");
+// --------- Save transactions to Firestore ---------
 
-  const t = transactions.find(t => t.id === id);
-  if (!t) return;
-
-  const newText = prompt("Edit description:", t.text);
-  const newAmount = prompt("Edit amount:", t.amount);
-
-  if (newText === null || newAmount === null) return;
-
-  t.text = newText;
-  t.amount = +newAmount;
-
-  saveData();
-  updateUI();
-}
-
-// Delete transaction
-function deleteTransaction(id) {
-  if (!userId || !budgetId) return alert("Login and join a budget first!");
-
-  transactions = transactions.filter(t => t.id !== id);
-  saveData();
-  updateUI();
-}
-
-// Save to Firestore
 function saveData() {
   if (!budgetId) return;
-  db.collection("budgets").doc(budgetId).update({
+
+  const budgetRef = db.collection("budgets").doc(budgetId);
+
+  budgetRef.set({
     transactions
+  }, { merge: true })
+  .catch(err => {
+    alert("Error saving transactions: " + err.message);
+    console.error(err);
   });
 }
 
-// Update UI
-function updateUI() {
-  const list = document.getElementById("list");
-  list.innerHTML = "";
+// --------- Update transactions table ---------
 
-  let balance = 0;
+function updateTransactionsTable() {
+  const tbody = document.getElementById("transactionsTableBody");
+  tbody.innerHTML = "";
 
   transactions.forEach(t => {
-    balance += t.amount;
+    const tr = document.createElement("tr");
 
-    const li = document.createElement("li");
-    li.className = t.amount > 0 ? "plus" : "minus";
-
-    li.innerHTML = `
-      <div>
-        ${t.text}
-        <small>${t.category}</small>
-      </div>
-      <div class="actions">
-        <span>$${t.amount}</span>
+    tr.innerHTML = `
+      <td>${escapeHtml(t.text)}</td>
+      <td>${escapeHtml(t.category)}</td>
+      <td>${t.amount}</td>
+      <td>
         <button onclick="editTransaction(${t.id})">✏️</button>
         <button onclick="deleteTransaction(${t.id})">🗑</button>
-      </div>
+      </td>
     `;
 
-    list.appendChild(li);
+    tbody.appendChild(tr);
   });
+}
 
-  document.getElementById("balance").innerText = balance;
+// --------- Clear transactions table ---------
+
+function clearTransactionsTable() {
+  document.getElementById("transactionsTableBody").innerHTML = "";
+}
+
+// --------- Delete transaction ---------
+
+function deleteTransaction(id) {
+  if (!budgetId) return;
+  transactions = transactions.filter(t => t.id !== id);
+  saveData();
+  updateTransactionsTable();
+}
+
+// --------- Edit transaction ---------
+
+function editTransaction(id) {
+  const tx = transactions.find(t => t.id === id);
+  if (!tx) return alert("Transaction not found");
+
+  const newText = prompt("Edit description:", tx.text);
+  if (newText === null) return; // Cancelled
+  const newAmountStr = prompt("Edit amount:", tx.amount);
+  if (newAmountStr === null) return; // Cancelled
+  const newAmount = Number(newAmountStr);
+  if (isNaN(newAmount) || newAmount === 0) return alert("Invalid amount");
+
+  const newCategory = prompt("Edit category (Food, Rent, Travel, Other):", tx.category);
+  if (newCategory === null || !["Food", "Rent", "Travel", "Other"].includes(newCategory)) return alert("Invalid category");
+
+  tx.text = newText.trim();
+  tx.amount = newAmount;
+  tx.category = newCategory;
+
+  saveData();
+  updateTransactionsTable();
+}
+
+// --------- Utility: Escape HTML ---------
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, function(m) {
+    return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m];
+  });
 }
