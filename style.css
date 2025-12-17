@@ -2,7 +2,7 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #f6d365, #fda085);
   min-height: 100vh;
   margin: 0;
   display: flex;
@@ -12,7 +12,7 @@ body {
 
 .app-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 520px;
   padding: 20px;
   text-align: center;
 }
@@ -21,24 +21,29 @@ h2, h3 { color: white; margin: 5px 0; }
 
 .card {
   background: white;
-  padding: 15px;
-  border-radius: 12px;
+  padding: 15px 20px;
+  border-radius: 15px;
   margin: 10px 0;
-  box-shadow: 0 10px 25px rgba(0,0,0,.2);
+  box-shadow: 0 15px 30px rgba(0,0,0,.2);
   animation: fade 0.4s ease;
 }
 
-input, select, button { padding: 10px; margin: 6px; border-radius: 8px; border: none; font-size: 14px; }
-button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s ease; }
-button:hover { transform: scale(1.05); }
+input, select, button { padding: 10px; margin: 5px; border-radius: 10px; border: none; font-size: 14px; }
+button { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: bold; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+button:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 .logout { background: #ff5252; margin-top: 10px; }
 
+.closeBtn { background:#ff5252; width:35px; height:35px; font-size:18px; line-height:18px; padding:0; border-radius:50%; }
+
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { padding: 8px; text-align: left; }
-tr:hover { background: #eee; }
+th, td { padding: 10px; text-align: left; }
+tr:hover { background: #f0f0f0; border-radius: 8px; }
 
 #emailBox, #createBudgetDiv, #addUserDiv { display: none; }
 
-.flex-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.flex-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.justify-space-between { justify-content: space-between; }
+
+input:focus, select:focus { outline: 2px solid #764ba2; }
 
 @keyframes fade { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }

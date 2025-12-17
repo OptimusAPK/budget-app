@@ -23,7 +23,6 @@ auth.onAuthStateChanged(u => {
   if (!u) { loginSection.style.display = "block"; appSection.style.display = "none"; userInfo.innerText = ""; return; }
 
   user = u;
-
   db.collection("users").doc(user.uid).set({ uid:user.uid, email:user.email, name:user.displayName||user.email }, { merge:true });
 
   loginSection.style.display = "none";
@@ -39,14 +38,23 @@ function loadBudgets() {
   db.collection("budgets").where("members","array-contains",user.uid)
     .onSnapshot(snap => {
       budgetSelect.innerHTML = `<option disabled>Select Budget</option>`;
-      const last = localStorage.getItem("lastBudgetId");
+      let lastBudget = localStorage.getItem("lastBudgetId");
 
       snap.forEach(doc => {
         const opt = document.createElement("option");
         opt.value = doc.id; opt.textContent = doc.data().name;
-        if(doc.id===last){ opt.selected=true; budgetId=doc.id; currentBudget.innerText="Budget: "+doc.data().name; listenTransactions(); }
         budgetSelect.appendChild(opt);
+
+        // Automatically select last budget
+        if(doc.id===lastBudget){ 
+          budgetSelect.value = lastBudget; 
+          budgetId = lastBudget; 
+          currentBudget.innerText="Budget: "+doc.data().name; 
+          document.getElementById("addUserBtn").style.display="inline-block";
+          listenTransactions(); 
+        }
       });
+
       budgetSelect.innerHTML += `<option value="new">➕ Create New</option>`;
     });
 }
@@ -81,7 +89,9 @@ function loadUsers() {
   });
 }
 
-function toggleAddUser(){ document.getElementById("addUserDiv").style.display = addUserDiv.style.display==="none"?"block":"none"; }
+function toggleAddUser(){ 
+  addUserDiv.style.display = addUserDiv.style.display==="none"?"block":"none"; 
+}
 
 function addUser(){
   if(!budgetId) return alert("Select a budget");

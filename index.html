@@ -47,13 +47,17 @@
 
     <!-- Add User interface -->
     <div class="card" id="addUserDiv" style="display:none">
+      <div class="flex-row justify-space-between">
+        <h3>Add User</h3>
+        <button class="closeBtn" onclick="toggleAddUser()">✖</button>
+      </div>
       <select id="usersDropdown">
         <option disabled selected>Select user to add</option>
       </select>
       <button onclick="addUser()">Add User</button>
     </div>
 
-    <!-- Add transaction (moved above table) -->
+    <!-- Add transaction -->
     <div class="card" id="addTransactionDiv">
       <h3>Add Transaction</h3>
       <div class="flex-row">
