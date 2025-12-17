@@ -1,25 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Budget Tracker</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <div class="container">
     <h1>💰 Budget Tracker</h1>
 
+    <button id="loginBtn" onclick="login()">Login with Google</button>
+    <p id="userInfo"></p>
+
     <h2>Balance: $<span id="balance">0</span></h2>
 
     <div class="form">
-      <input type="text" id="text" placeholder="Description">
-      <input type="number" id="amount" placeholder="Amount (+ income, - expense)">
-      <button onclick="addTransaction()">Add</button>
+      <input type="text" id="text" placeholder="Description" />
+
+      <select id="category">
+        <option value="Food">🍔 Food</option>
+        <option value="Rent">🏠 Rent</option>
+        <option value="Travel">✈️ Travel</option>
+        <option value="Other">📦 Other</option>
+      </select>
+
+      <input type="number" id="amount" placeholder="+ income / - expense" />
+      <button onclick="addTransaction()">Add Transaction</button>
     </div>
 
     <ul id="list"></ul>
   </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script src="script.js"></script>
 </body>

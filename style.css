@@ -1,35 +1,47 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: Arial, sans-serif;
   background: #f4f6f8;
   display: flex;
   justify-content: center;
-  margin-top: 50px;
+  margin-top: 40px;
 }
 
 .container {
   background: #fff;
   padding: 20px;
-  width: 350px;
+  width: 380px;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 12px rgba(0,0,0,0.1);
 }
 
 h1, h2 {
   text-align: center;
 }
 
-.form {
-  display: flex;
-  gap: 5px;
+#loginBtn {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
 }
 
-input {
-  flex: 1;
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+input, select, button {
   padding: 8px;
+  font-size: 14px;
 }
 
 button {
-  padding: 8px;
   cursor: pointer;
 }
 
@@ -39,11 +51,35 @@ ul {
 }
 
 li {
-  padding: 8px;
-  margin: 5px 0;
+  background: #fafafa;
+  padding: 10px;
+  margin: 6px 0;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  border-right: 5px solid;
 }
 
-.plus { border-right: 5px solid green; }
-.minus { border-right: 5px solid red; }
+.plus {
+  border-color: green;
+}
+
+.minus {
+  border-color: red;
+}
+
+small {
+  display: block;
+  color: gray;
+}
+
+/* 📱 Mobile-first */
+@media (max-width: 480px) {
+  body {
+    margin: 10px;
+  }
+
+  .container {
+    width: 100%;
+  }
+}
