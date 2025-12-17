@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Budget Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>💰 Budget Tracker</h1>
+
+    <h2>Balance: $<span id="balance">0</span></h2>
+
+    <div class="form">
+      <input type="text" id="text" placeholder="Description">
+      <input type="number" id="amount" placeholder="Amount (+ income, - expense)">
+      <button onclick="addTransaction()">Add</button>
+    </div>
+
+    <ul id="list"></ul>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
