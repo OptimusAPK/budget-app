@@ -1,193 +1,137 @@
 // Firebase config
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyAE0DpuMOtf6gcMTNTh22jOPaovXSzKYBU",
   authDomain: "budget-app-193ef.firebaseapp.com",
-  projectId: "budget-app-193ef",
-  storageBucket: "budget-app-193ef.appspot.com",
-  messagingSenderId: "875342270120",
-  appId: "1:875342270120:web:e5304dae0d056552217c9d",
-  measurementId: "G-YYQDZR9YHV"
-};
+  projectId: "budget-app-193ef"
+});
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Global state
-let currentUser = null;
-let currentBudgetId = null;
+let user, budgetId, unsubscribe;
 
-// --------------------- Auth -----------------------
+// ---------- AUTH ----------
 function loginWithGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider)
-    .then(res => setupUser(res.user))
-    .catch(console.error);
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
 }
 
-function showEmailLogin() {
-  document.getElementById("emailLoginSection").style.display = "block";
+function toggleEmail() {
+  document.getElementById("emailBox").style.display = "block";
 }
 
 function emailLogin() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, password)
-      .then(res => setupUser(res.user))
-      .catch(console.error);
+  auth.signInWithEmailAndPassword(
+    email.value, password.value
+  );
 }
 
-function emailSignUp() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, password)
-      .then(res => setupUser(res.user))
-      .catch(console.error);
+function emailSignup() {
+  auth.createUserWithEmailAndPassword(
+    email.value, password.value
+  );
 }
 
-function setupUser(user) {
-  currentUser = user;
-  document.getElementById("loginSection").style.display = "none";
-  document.getElementById("appSection").style.display = "block";
-  document.getElementById("userInfo").innerText = `Hello, ${user.displayName || user.email}`;
-  saveUserToFirestore();
-  fetchBudgets();
-  fetchAllUsers();
-}
+auth.onAuthStateChanged(u => {
+  if (!u) return;
+  user = u;
 
-// --------------------- Firestore -----------------------
-function saveUserToFirestore() {
-  db.collection("users").doc(currentUser.uid).set({
-    name: currentUser.displayName || currentUser.email
+  db.collection("users").doc(user.uid).set({
+    uid: user.uid,
+    email: user.email,
+    name: user.displayName || user.email
   }, { merge: true });
-}
 
-// Fetch budgets where user is a member
-function fetchBudgets() {
+  loginSection.style.display = "none";
+  appSection.style.display = "block";
+  userInfo.innerText = "Logged in as " + (user.displayName || user.email);
+
+  loadBudgets();
+  loadUsers();
+});
+
+// ---------- BUDGETS ----------
+function loadBudgets() {
   db.collection("budgets")
-    .where("members", "array-contains", currentUser.uid)
-    .onSnapshot(snapshot => {
-      const select = document.getElementById("budgetSelect");
-      select.innerHTML = `<option value="" disabled selected>Select Budget</option>`;
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const option = document.createElement("option");
-        option.value = doc.id;
-        option.innerText = data.name;
-        select.appendChild(option);
+    .where("members", "array-contains", user.uid)
+    .onSnapshot(snap => {
+      budgetSelect.innerHTML = `<option disabled selected>Select Budget</option>`;
+      snap.forEach(doc => {
+        budgetSelect.innerHTML += `<option value="${doc.id}">${doc.data().name}</option>`;
       });
-      // Add "Create New" option
-      const newOption = document.createElement("option");
-      newOption.value = "create_new";
-      newOption.innerText = "➕ Create New Budget";
-      select.appendChild(newOption);
+      budgetSelect.innerHTML += `<option value="new">➕ Create New</option>`;
     });
 }
 
-// Fetch all users for adding to budget
-function fetchAllUsers() {
-  db.collection("users").get().then(snapshot => {
-    const select = document.getElementById("allUsersSelect");
-    select.innerHTML = `<option value="" disabled selected>Select user to add</option>`;
-    snapshot.forEach(doc => {
-      const option = document.createElement("option");
-      option.value = doc.id;
-      option.innerText = doc.data().name;
-      if(doc.id !== currentUser.uid) select.appendChild(option);
+function onBudgetChange() {
+  if (budgetSelect.value === "new") return;
+
+  budgetId = budgetSelect.value;
+  currentBudget.innerText = "Budget: " + budgetSelect.options[budgetSelect.selectedIndex].text;
+  listenTransactions();
+}
+
+function createBudget() {
+  db.collection("budgets").add({
+    name: newBudgetName.value,
+    ownerId: user.uid,
+    members: [user.uid]
+  });
+  newBudgetName.value = "";
+}
+
+// ---------- USERS ----------
+function loadUsers() {
+  db.collection("users").get().then(snap => {
+    usersDropdown.innerHTML = `<option disabled selected>Add user</option>`;
+    snap.forEach(d => {
+      if (d.id !== user.uid)
+        usersDropdown.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
     });
   });
 }
 
-// Handle budget selection
-function handleBudgetChange() {
-  const select = document.getElementById("budgetSelect");
-  const value = select.value;
-  if(value === "create_new") {
-    document.getElementById("newBudgetSection").style.display = "flex";
-    currentBudgetId = null;
-    document.getElementById("transactionsTableBody").innerHTML = "";
-    document.getElementById("currentBudget").innerText = "None";
-  } else {
-    document.getElementById("newBudgetSection").style.display = "none";
-    currentBudgetId = value;
-    db.collection("budgets").doc(currentBudgetId)
-      .get().then(doc => {
-        document.getElementById("currentBudget").innerText = doc.data().name;
-      });
-    fetchTransactions();
-  }
+function addUser() {
+  db.collection("budgets").doc(budgetId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(usersDropdown.value)
+  });
 }
 
-// Create new budget
-function createNewBudget() {
-  const name = document.getElementById("newBudgetName").value.trim();
-  if(!name) return alert("Enter a budget name");
-  db.collection("budgets").add({
-    name,
-    ownerId: currentUser.uid,
-    members: [currentUser.uid]
-  }).then(doc => {
-    currentBudgetId = doc.id;
-    document.getElementById("currentBudget").innerText = name;
-    document.getElementById("newBudgetName").value = "";
-    document.getElementById("newBudgetSection").style.display = "none";
-  }).catch(console.error);
-}
-
-// Add user to current budget
-function addUserToBudget() {
-  const userId = document.getElementById("allUsersSelect").value;
-  if(!userId || !currentBudgetId) return;
-  const budgetRef = db.collection("budgets").doc(currentBudgetId);
-  budgetRef.update({
-    members: firebase.firestore.FieldValue.arrayUnion(userId)
-  }).then(() => fetchBudgets())
-    .catch(console.error);
-}
-
-// --------------------- Transactions -----------------------
-function fetchTransactions() {
-  if(!currentBudgetId) return;
-  db.collection("budgets").doc(currentBudgetId)
+// ---------- TRANSACTIONS ----------
+function listenTransactions() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = db.collection("budgets")
+    .doc(budgetId)
     .collection("transactions")
-    .onSnapshot(snapshot => {
-      const tbody = document.getElementById("transactionsTableBody");
-      tbody.innerHTML = "";
-      snapshot.forEach(doc => {
-        const tr = document.createElement("tr");
-        const data = doc.data();
-        tr.innerHTML = `
-          <td>${data.text}</td>
-          <td>${data.category}</td>
-          <td>${data.amount}</td>
-          <td>
-            <button onclick="deleteTransaction('${doc.id}')">🗑️</button>
-          </td>`;
-        tbody.appendChild(tr);
+    .orderBy("createdAt")
+    .onSnapshot(snap => {
+      transactions.innerHTML = "";
+      snap.forEach(doc => {
+        const t = doc.data();
+        transactions.innerHTML += `
+          <tr>
+            <td>${t.text}</td>
+            <td>${t.category}</td>
+            <td>${t.amount}</td>
+            <td><button onclick="delTx('${doc.id}')">🗑</button></td>
+          </tr>`;
       });
     });
 }
 
 function addTransaction() {
-  if(!currentBudgetId) return;
-  const text = document.getElementById("text").value.trim();
-  const category = document.getElementById("category").value;
-  const amount = Number(document.getElementById("amount").value);
-  if(!text || !category || !amount) return alert("Fill all fields");
-  db.collection("budgets").doc(currentBudgetId)
+  db.collection("budgets").doc(budgetId)
     .collection("transactions")
-    .add({ text, category, amount })
-    .then(() => {
-      document.getElementById("text").value = "";
-      document.getElementById("amount").value = "";
-    })
-    .catch(console.error);
+    .add({
+      text: desc.value,
+      category: cat.value,
+      amount: Number(amt.value),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      by: user.uid
+    });
+  desc.value = amt.value = "";
 }
 
-function deleteTransaction(id) {
-  if(!currentBudgetId) return;
-  db.collection("budgets").doc(currentBudgetId)
-    .collection("transactions").doc(id)
-    .delete().catch(console.error);
+function delTx(id) {
+  db.collection("budgets").doc(budgetId)
+    .collection("transactions").doc(id).delete();
 }

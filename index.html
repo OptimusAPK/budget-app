@@ -1,92 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Funky Collaborative Budget App</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Collaborative Budget App</title>
+  <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h2>💰 Funky Collaborative Budget App</h2>
 
-  <!-- Login Section -->
-  <div id="loginSection" class="card">
-    <button onclick="loginWithGoogle()">Login with Google</button>
-    <button onclick="showEmailLogin()">Login with Email</button>
+<h2>💰 Collaborative Budget App</h2>
 
-    <div id="emailLoginSection" style="display:none; margin-top:10px;">
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Password" />
-      <button onclick="emailLogin()">Login</button>
-      <button onclick="emailSignUp()">Sign Up</button>
-    </div>
+<!-- LOGIN -->
+<div id="loginSection" class="card">
+  <button onclick="loginWithGoogle()">Login with Google</button>
+  <button onclick="toggleEmail()">Login with Email</button>
+
+  <div id="emailBox" style="display:none">
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="emailLogin()">Login</button>
+    <button onclick="emailSignup()">Sign Up</button>
+  </div>
+</div>
+
+<p id="userInfo"></p>
+
+<!-- APP -->
+<div id="appSection" style="display:none">
+
+  <div class="card">
+    <select id="budgetSelect" onchange="onBudgetChange()">
+      <option disabled selected>Select Budget</option>
+    </select>
   </div>
 
-  <p id="userInfo"></p>
-
-  <!-- Main App Section -->
-  <div id="appSection" style="display:none; width:100%;">
-
-    <!-- Budget selection -->
-    <div class="card form">
-      <label for="budgetSelect">Select Budget:</label>
-      <select id="budgetSelect" onchange="handleBudgetChange()">
-        <option value="" disabled selected>Loading budgets...</option>
-      </select>
-    </div>
-
-    <!-- New budget creation -->
-    <div class="card form" id="newBudgetSection">
-      <input type="text" id="newBudgetName" placeholder="Enter new budget name" />
-      <button onclick="createNewBudget()">Create Budget</button>
-    </div>
-
-    <!-- Add user to budget -->
-    <div class="card form" id="addUserSection">
-      <select id="allUsersSelect">
-        <option value="" disabled selected>Select user to add</option>
-      </select>
-      <button onclick="addUserToBudget()">Add User</button>
-    </div>
-
-    <p><strong>Current Budget:</strong> <span id="currentBudget">None</span></p>
-
-    <!-- Transactions Table -->
-    <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="transactionsTableBody"></tbody>
-      </table>
-    </div>
-
-    <!-- Add Transaction Form -->
-    <div class="card form">
-      <input type="text" id="text" placeholder="Description" />
-      <select id="category">
-        <option value="Food">🍔 Food</option>
-        <option value="Rent">🏠 Rent</option>
-        <option value="Travel">✈️ Travel</option>
-        <option value="Other">📦 Other</option>
-      </select>
-      <input type="number" id="amount" placeholder="+ income / - expense" />
-      <button onclick="addTransaction()">Add Transaction</button>
-    </div>
-
+  <div class="card" id="newBudgetCard">
+    <input id="newBudgetName" placeholder="New Budget Name">
+    <button onclick="createBudget()">Create Budget</button>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <div class="card" id="addUserCard">
+    <select id="usersDropdown">
+      <option disabled selected>Add user</option>
+    </select>
+    <button onclick="addUser()">Add</button>
+  </div>
 
-  <script src="script.js"></script>
+  <h3 id="currentBudget">No Budget Selected</h3>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="transactions"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <input id="desc" placeholder="Description">
+    <select id="cat">
+      <option>Food</option>
+      <option>Rent</option>
+      <option>Travel</option>
+      <option>Other</option>
+    </select>
+    <input id="amt" type="number" placeholder="Amount">
+    <button onclick="addTransaction()">Add</button>
+  </div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script src="script.js"></script>
 </body>
 </html>
