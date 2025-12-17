@@ -41,10 +41,12 @@
       <button onclick="createNewBudget()">Create Budget</button>
     </div>
 
-    <!-- Invite users to budget -->
-    <div class="form" id="inviteSection" style="display:none;">
-      <input type="email" id="inviteEmail" placeholder="Invite user by email" />
-      <button onclick="inviteUser()">Invite</button>
+    <!-- Add user to budget -->
+    <div class="form" id="addUserSection" style="display:none;">
+      <select id="allUsersSelect">
+        <option value="" disabled selected>Select user to add</option>
+      </select>
+      <button onclick="addUserToBudget()">Add User</button>
     </div>
 
     <p><strong>Current Budget:</strong> <span id="currentBudget">None</span></p>

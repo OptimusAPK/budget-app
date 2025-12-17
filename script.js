@@ -17,6 +17,7 @@ let userId = null;
 let budgetId = null;
 let budgets = [];
 let transactions = [];
+let allUsers = []; // all users in the app
 
 // --------- Authentication ---------
 function loginWithGoogle() {
@@ -39,7 +40,6 @@ function emailSignUp() {
   const password = document.getElementById("password").value;
   auth.createUserWithEmailAndPassword(email, password)
     .then(({ user }) => {
-      // create user doc for collaboration
       db.collection("users").doc(user.uid).set({ email: user.email, name: user.displayName || "" });
     })
     .catch(err => alert(err.message));
@@ -49,7 +49,6 @@ function emailSignUp() {
 auth.onAuthStateChanged(user => {
   if (user) {
     userId = user.uid;
-    // Create user doc if not exists
     db.collection("users").doc(userId).set({ email: user.email, name: user.displayName || "" }, { merge: true });
 
     document.getElementById("userInfo").innerText = `Logged in as ${user.email || user.displayName}`;
@@ -73,19 +72,15 @@ auth.onAuthStateChanged(user => {
 // --------- Fetch budgets user belongs to ---------
 function fetchUserBudgets() {
   if (!userId) return;
-
-  db.collection("budgets")
-    .where("members", "array-contains", userId)
-    .get()
+  db.collection("budgets").where("members", "array-contains", userId).get()
     .then(snapshot => {
       budgets = [];
       snapshot.forEach(doc => budgets.push({ id: doc.id, ...doc.data() }));
       updateBudgetSelect();
-    })
-    .catch(err => alert(err.message));
+    }).catch(err => alert(err.message));
 }
 
-// --------- Update the budget select dropdown ---------
+// --------- Update budget dropdown ---------
 function updateBudgetSelect() {
   const select = document.getElementById("budgetSelect");
   select.innerHTML = "";
@@ -108,7 +103,7 @@ function updateBudgetSelect() {
     budgets.forEach(b => {
       const option = document.createElement("option");
       option.value = b.id;
-      option.text = b.name ? b.name + " (" + b.id + ")" : b.id;
+      option.text = b.name || b.id;
       select.appendChild(option);
     });
 
@@ -130,14 +125,15 @@ function handleBudgetChange() {
   const val = document.getElementById("budgetSelect").value;
   if (val === "create_new") {
     document.getElementById("newBudgetSection").style.display = "block";
-    document.getElementById("inviteSection").style.display = "none";
+    document.getElementById("addUserSection").style.display = "none";
     budgetId = null;
     document.getElementById("currentBudget").innerText = "None";
     clearTransactionsTable();
   } else {
     document.getElementById("newBudgetSection").style.display = "none";
-    document.getElementById("inviteSection").style.display = "block";
+    document.getElementById("addUserSection").style.display = "block";
     budgetId = val;
+    fetchAllUsers(); // populate dropdown
     const selectedBudget = budgets.find(b => b.id === val);
     document.getElementById("currentBudget").innerText = selectedBudget ? selectedBudget.name : val;
     listenToBudget();
@@ -150,38 +146,51 @@ function createNewBudget() {
   if (!name) return alert("Enter a budget name");
 
   const newBudgetRef = db.collection("budgets").doc();
-  newBudgetRef.set({
-    name,
-    ownerId: userId,
-    members: [userId],
-    transactions: []
-  }).then(() => {
-    budgetId = newBudgetRef.id;
-    document.getElementById("currentBudget").innerText = name;
-    document.getElementById("newBudgetSection").style.display = "none";
-    document.getElementById("newBudgetName").value = "";
-    fetchUserBudgets();
-    listenToBudget();
-  }).catch(err => alert(err.message));
+  newBudgetRef.set({ name, ownerId: userId, members: [userId], transactions: [] })
+    .then(() => {
+      budgetId = newBudgetRef.id;
+      document.getElementById("currentBudget").innerText = name;
+      document.getElementById("newBudgetSection").style.display = "none";
+      document.getElementById("newBudgetName").value = "";
+      fetchUserBudgets();
+      listenToBudget();
+    }).catch(err => alert(err.message));
 }
 
-// --------- Invite user to budget ---------
-function inviteUser() {
-  const email = document.getElementById("inviteEmail").value.trim();
-  if (!email) return alert("Enter an email");
-
-  db.collection("users").where("email", "==", email).get()
+// --------- Fetch all users for add-user dropdown ---------
+function fetchAllUsers() {
+  db.collection("users").get()
     .then(snapshot => {
-      if (snapshot.empty) return alert("User not found");
-      const uid = snapshot.docs[0].id;
-      db.collection("budgets").doc(budgetId).update({
-        members: firebase.firestore.FieldValue.arrayUnion(uid)
-      }).then(() => {
-        alert("User added!");
-        document.getElementById("inviteEmail").value = "";
+      allUsers = [];
+      snapshot.forEach(doc => { 
+        if(doc.id !== userId) allUsers.push({ uid: doc.id, ...doc.data() });
       });
-    })
-    .catch(err => alert(err.message));
+      updateUsersSelect();
+    }).catch(err => alert(err.message));
+}
+
+function updateUsersSelect() {
+  const select = document.getElementById("allUsersSelect");
+  select.innerHTML = '<option value="" disabled selected>Select user to add</option>';
+  allUsers.forEach(u => {
+    const option = document.createElement("option");
+    option.value = u.uid;
+    option.text = u.email;
+    select.appendChild(option);
+  });
+}
+
+// --------- Add user to budget ---------
+function addUserToBudget() {
+  const uid = document.getElementById("allUsersSelect").value;
+  if (!uid) return alert("Select a user to add");
+
+  db.collection("budgets").doc(budgetId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(uid)
+  }).then(() => {
+    alert("User added to budget!");
+    document.getElementById("allUsersSelect").value = "";
+  }).catch(err => alert(err.message));
 }
 
 // --------- Listen to budget transactions ---------
@@ -190,8 +199,8 @@ function listenToBudget() {
   if (!budgetId) return;
 
   if (unsubscribeBudget) unsubscribeBudget();
-
   const budgetRef = db.collection("budgets").doc(budgetId);
+
   unsubscribeBudget = budgetRef.onSnapshot(doc => {
     if (doc.exists) {
       transactions = doc.data().transactions || [];
