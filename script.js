@@ -81,10 +81,38 @@ function onBudgetChange() {
   }
 }
 
+// ---------- CREATE NEW BUDGET ----------
 function createBudget() {
   if(!newBudgetName.value) return alert("Enter budget name");
-  db.collection("budgets").add({ name:newBudgetName.value, ownerId:user.uid, members:[user.uid] });
-  newBudgetName.value=""; document.getElementById("createBudgetDiv").style.display="none";
+
+  db.collection("budgets").add({
+    name: newBudgetName.value,
+    ownerId: user.uid,
+    members: [user.uid]
+  }).then(docRef => {
+    newBudgetName.value = "";
+    document.getElementById("createBudgetDiv").style.display = "none";
+
+    // Reload dropdown and select new budget
+    db.collection("budgets").where("members","array-contains",user.uid).get().then(snap=>{
+      budgetSelect.innerHTML = `<option disabled>Select Budget</option>`;
+      snap.forEach(doc => {
+        const opt = document.createElement("option");
+        opt.value = doc.id;
+        opt.textContent = doc.data().name;
+        budgetSelect.appendChild(opt);
+      });
+      budgetSelect.innerHTML += `<option value="new">➕ Create New</option>`;
+
+      // Select new budget
+      budgetSelect.value = docRef.id;
+      budgetId = docRef.id;
+      localStorage.setItem("lastBudgetId",budgetId);
+      currentBudget.innerText = "Budget: "+docRef.name;
+      document.getElementById("addUserBtn").style.display = "inline-block";
+      listenTransactions();
+    });
+  });
 }
 
 // ---------- USERS ----------
