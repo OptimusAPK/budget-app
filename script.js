@@ -36,26 +36,32 @@ auth.onAuthStateChanged(u => {
 // ---------- BUDGET ----------
 function loadBudgets() {
   db.collection("budgets").where("members","array-contains",user.uid)
-    .onSnapshot(snap => {
+    .get()
+    .then(snap => {
       budgetSelect.innerHTML = `<option disabled>Select Budget</option>`;
       let lastBudget = localStorage.getItem("lastBudgetId");
+      let selectedBudgetSet = false;
 
       snap.forEach(doc => {
         const opt = document.createElement("option");
-        opt.value = doc.id; opt.textContent = doc.data().name;
+        opt.value = doc.id;
+        opt.textContent = doc.data().name;
         budgetSelect.appendChild(opt);
 
-        // Automatically select last budget
-        if(doc.id===lastBudget){ 
-          budgetSelect.value = lastBudget; 
-          budgetId = lastBudget; 
-          currentBudget.innerText="Budget: "+doc.data().name; 
-          document.getElementById("addUserBtn").style.display="inline-block";
-          listenTransactions(); 
+        if (doc.id === lastBudget) {
+          budgetSelect.value = lastBudget;
+          budgetId = lastBudget;
+          selectedBudgetSet = true;
+          currentBudget.innerText = "Budget: " + doc.data().name;
+          document.getElementById("addUserBtn").style.display = "inline-block";
         }
       });
 
       budgetSelect.innerHTML += `<option value="new">➕ Create New</option>`;
+
+      if(selectedBudgetSet){
+        listenTransactions();
+      }
     });
 }
 
