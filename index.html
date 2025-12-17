@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Budget App with Firebase</title>
+  <title>Collaborative Budget App</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>Budget App</h2>
+  <h2>Collaborative Budget App</h2>
 
   <!-- Login section -->
   <div id="loginSection">
@@ -35,10 +35,16 @@
       </select>
     </div>
 
-    <!-- New budget creation (hidden by default) -->
+    <!-- New budget creation -->
     <div class="form" id="newBudgetSection" style="display:none;">
       <input type="text" id="newBudgetName" placeholder="Enter new budget name" />
       <button onclick="createNewBudget()">Create Budget</button>
+    </div>
+
+    <!-- Invite users to budget -->
+    <div class="form" id="inviteSection" style="display:none;">
+      <input type="email" id="inviteEmail" placeholder="Invite user by email" />
+      <button onclick="inviteUser()">Invite</button>
     </div>
 
     <p><strong>Current Budget:</strong> <span id="currentBudget">None</span></p>
@@ -53,9 +59,7 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody id="transactionsTableBody">
-        <!-- Transactions rows will go here -->
-      </tbody>
+      <tbody id="transactionsTableBody"></tbody>
     </table>
 
     <!-- Add transaction form -->
