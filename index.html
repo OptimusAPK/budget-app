@@ -5,78 +5,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anupam & Astha Budget App</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 
 <div class="app-container">
-
-  <h2>Anupam & Astha 💰 Budget App</h2>
+  <div class="header-section">
+    <h1>💰 Budget App</h1>
+    <p class="subtitle">Anupam & Astha</p>
+  </div>
 
   <!-- LOGIN -->
-  <div id="loginSection" class="card">
-    <button onclick="loginWithGoogle()">Login with Google</button>
-    <button onclick="toggleEmail()">Login with Email</button>
+  <div id="loginSection" class="card login-card">
+    <h2>Welcome to Budget App</h2>
+    <p class="login-desc">Manage your shared expenses effortlessly</p>
+    <button class="btn-primary" onclick="loginWithGoogle()"><i class="fab fa-google"></i> Login with Google</button>
+    <div class="divider">OR</div>
+    <button class="btn-secondary" onclick="toggleEmail()"><i class="fas fa-envelope"></i> Login with Email</button>
 
-    <div id="emailBox">
-      <input id="email" type="email" placeholder="Email">
-      <input id="password" type="password" placeholder="Password">
-      <button onclick="emailLogin()">Login</button>
-      <button onclick="emailSignup()">Sign Up</button>
+    <div id="emailBox" class="email-box">
+      <div class="form-group">
+        <input id="email" type="email" placeholder="Email address" required>
+      </div>
+      <div class="form-group">
+        <input id="password" type="password" placeholder="Password" required>
+      </div>
+      <div class="button-group">
+        <button class="btn-primary" onclick="emailLogin()">Login</button>
+        <button class="btn-secondary" onclick="emailSignup()">Sign Up</button>
+      </div>
     </div>
   </div>
 
-  <p id="userInfo"></p>
+  <p id="userInfo" class="user-info"></p>
 
   <!-- APP (hidden by default) -->
   <div id="appSection" style="display:none">
 
     <!-- Budget selector + Add User -->
-    <div class="card flex-row">
-      <select id="budgetSelect" onchange="onBudgetChange()">
-        <option disabled selected>Select Budget</option>
-      </select>
-      <button id="addUserBtn" onclick="toggleAddUser()" style="display:none">➕ Add User</button>
+    <div class="card header-card">
+      <div class="budget-selector-group">
+        <select id="budgetSelect" class="budget-select" onchange="onBudgetChange()">
+          <option disabled selected>Select Budget</option>
+        </select>
+        <button id="addUserBtn" class="btn-icon" onclick="toggleAddUser()" style="display:none" title="Add user to budget">
+          <i class="fas fa-user-plus"></i> Add Member
+        </button>
+      </div>
     </div>
 
     <!-- Create budget (shown only when Create New is selected) -->
     <div class="card" id="createBudgetDiv" style="display:none">
-      <input id="newBudgetName" placeholder="New Budget Name">
-      <button onclick="createBudget()">Create Budget</button>
+      <h3>Create New Budget</h3>
+      <div class="form-group">
+        <input id="newBudgetName" placeholder="Budget name (e.g., Trip to Europe)" required>
+      </div>
+      <button class="btn-primary" onclick="createBudget()"><i class="fas fa-plus"></i> Create</button>
     </div>
 
     <!-- Add User interface -->
-    <div class="card" id="addUserDiv" style="display:none">
-      <div class="flex-row justify-space-between">
-        <h3>Add User</h3>
-        <button class="closeBtn" onclick="toggleAddUser()">✖</button>
+    <div class="card modal-card" id="addUserDiv" style="display:none">
+      <div class="modal-header">
+        <h3><i class="fas fa-user-plus"></i> Add Member to Budget</h3>
+        <button class="closeBtn" onclick="toggleAddUser()"><i class="fas fa-times"></i></button>
       </div>
-      <select id="usersDropdown">
+      <select id="usersDropdown" class="form-control">
         <option disabled selected>Select user to add</option>
       </select>
-      <button onclick="addUser()">Add User</button>
+      <button class="btn-primary btn-block" onclick="addUser()"><i class="fas fa-check"></i> Add Member</button>
+    </div>
+
+    <!-- Budget Summary -->
+    <div class="card" id="summaryDiv" style="display:none">
+      <h3><i class="fas fa-chart-pie"></i> Budget Summary</h3>
+      <div id="summaryContent" class="summary-grid"></div>
     </div>
 
     <!-- Add transaction -->
-    <div class="card" id="addTransactionDiv">
-      <h3>Add Transaction</h3>
-      <div class="flex-row">
-        <input id="desc" placeholder="Description">
-        <select id="cat">
-          <option>Food</option>
-          <option>Rent</option>
-          <option>Travel</option>
-          <option>Other</option>
-        </select>
-        <input id="amt" type="number" placeholder="Amount">
-        <button onclick="addTransaction()">➕</button>
+    <div class="card add-transaction-card" id="addTransactionDiv">
+      <h3><i class="fas fa-plus-circle"></i> Add Expense</h3>
+      <div class="transaction-form">
+        <div class="form-group">
+          <input id="desc" placeholder="What did you spend on?" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <select id="cat" class="form-control">
+              <option value="">Select category</option>
+              <option value="Food">🍔 Food</option>
+              <option value="Rent">🏠 Rent</option>
+              <option value="Travel">✈️ Travel</option>
+              <option value="Entertainment">🎬 Entertainment</option>
+              <option value="Utilities">💡 Utilities</option>
+              <option value="Shopping">🛍️ Shopping</option>
+              <option value="Other">📌 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <input id="amt" type="number" placeholder="Amount" step="0.01" min="0" required>
+          </div>
+          <button class="btn-primary btn-add" onclick="addTransaction()"><i class="fas fa-plus"></i></button>
+        </div>
       </div>
     </div>
 
     <!-- Transactions Table -->
-    <div class="card">
-      <h3 id="currentBudget">No Budget Selected</h3>
-      <table>
+    <div class="card transactions-card">
+      <div class="card-header">
+        <h3 id="currentBudget"><i class="fas fa-list"></i> No Budget Selected</h3>
+        <div class="transaction-count" id="txCount"></div>
+      </div>
+      <div id="noTransactions" class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>No expenses yet. Add your first expense above!</p>
+      </div>
+      <table id="transactionsTable" style="display:none">
         <thead>
           <tr>
             <th>Description</th>
@@ -89,7 +133,7 @@
       </table>
     </div>
 
-    <button class="logout" onclick="logout()">Logout</button>
+    <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
 
   </div>
 </div>
