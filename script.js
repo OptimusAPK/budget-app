@@ -215,56 +215,70 @@ function listenTransactions(){
     return;
   }
   
-  unsubscribe = db.collection("budgets").doc(budgetId)
-    .collection("transactions").orderBy("createdAt", "desc")
-    .onSnapshot(snap=>{
-      const transactions = document.getElementById("transactions");
-      const transactionsTable = document.getElementById("transactionsTable");
-      const noTransactions = document.getElementById("noTransactions");
-      const summaryDiv = document.getElementById("summaryDiv");
-      
-      currentTransactions = [];
-      transactions.innerHTML = "";
-      
-      if(snap.empty) {
-        noTransactions.style.display = "block";
-        transactionsTable.style.display = "none";
-        summaryDiv.style.display = "none";
-        return;
+  // Start with a basic query, then order if all docs have createdAt
+  let query = db.collection("budgets").doc(budgetId).collection("transactions");
+  
+  unsubscribe = query.onSnapshot(snap=>{
+    const transactions = document.getElementById("transactions");
+    const transactionsTable = document.getElementById("transactionsTable");
+    const noTransactions = document.getElementById("noTransactions");
+    const summaryDiv = document.getElementById("summaryDiv");
+    
+    currentTransactions = [];
+    transactions.innerHTML = "";
+    
+    if(snap.empty) {
+      noTransactions.style.display = "block";
+      transactionsTable.style.display = "none";
+      summaryDiv.style.display = "none";
+      return;
+    }
+    
+    noTransactions.style.display = "none";
+    transactionsTable.style.display = "table";
+    
+    // Collect and sort transactions client-side for better compatibility
+    const txArray = [];
+    snap.forEach(doc => {
+      txArray.push({id: doc.id, ...doc.data()});
+    });
+    
+    // Sort by createdAt if available, otherwise by document order
+    txArray.sort((a, b) => {
+      if(a.createdAt && b.createdAt) {
+        return b.createdAt.toDate() - a.createdAt.toDate();
       }
+      return 0;
+    });
+    
+    let total = 0;
+    const categoryTotals = {};
+    
+    txArray.forEach(t => {
+      currentTransactions.push(t);
       
-      noTransactions.style.display = "none";
-      transactionsTable.style.display = "table";
+      total += t.amount;
+      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
       
-      let total = 0;
-      const categoryTotals = {};
-      
-      snap.forEach(doc => {
-        const t = doc.data();
-        currentTransactions.push({id: doc.id, ...t});
-        
-        total += t.amount;
-        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
-        
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${sanitizeHtml(t.text)}</td>
-          <td><span class="category-badge">${t.category}</span></td>
-          <td>₹${t.amount.toFixed(2)}</td>
-          <td>
-            <div class="action-buttons">
-              <button onclick="editTransaction('${doc.id}')">✏️ Edit</button>
-              <button onclick="deleteTransaction('${doc.id}')">🗑️ Delete</button>
-            </div>
-          </td>
-        `;
-        transactions.appendChild(row);
-      });
-      
-      document.getElementById("txCount").textContent = snap.size + " expense" + (snap.size !== 1 ? "s" : "");
-      updateSummary(total, categoryTotals);
-    },
-    err => showError("Failed to load transactions: " + err.message));
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${sanitizeHtml(t.text)}</td>
+        <td><span class="category-badge">${t.category}</span></td>
+        <td>₹${t.amount.toFixed(2)}</td>
+        <td>
+          <div class="action-buttons">
+            <button onclick="editTransaction('${t.id}')">✏️ Edit</button>
+            <button onclick="deleteTransaction('${t.id}')">🗑️ Delete</button>
+          </div>
+        </td>
+      `;
+      transactions.appendChild(row);
+    });
+    
+    document.getElementById("txCount").textContent = txArray.length + " expense" + (txArray.length !== 1 ? "s" : "");
+    updateSummary(total, categoryTotals);
+  },
+  err => console.error("Failed to load transactions:", err));
 }
 
 function updateSummary(total, categoryTotals) {
