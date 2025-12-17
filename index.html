@@ -36,6 +36,13 @@
         <button class="btn-secondary" onclick="emailSignup()">Sign Up</button>
       </div>
     </div>
+    
+    <div class="login-help">
+      <p style="font-size: 0.85rem; color: #999; margin-top: 20px;">
+        <strong>Need help?</strong> Check your browser console (F12) for error messages.<br>
+        <strong>For Google Login:</strong> You may need to use HTTPS or whitelist localhost in Firebase.
+      </p>
+    </div>
   </div>
 
   <p id="userInfo" class="user-info"></p>
@@ -43,25 +50,47 @@
   <!-- APP (hidden by default) -->
   <div id="appSection" style="display:none">
 
+    <!-- Settings Bar -->
+    <div class="card settings-bar">
+      <div class="settings-group">
+        <label for="currencySelect">💱 Currency:</label>
+        <select id="currencySelect" onchange="changeCurrency()" class="currency-select">
+          <option value="INR">₹ INR (Indian Rupee)</option>
+          <option value="USD">$ USD (US Dollar)</option>
+          <option value="EUR">€ EUR (Euro)</option>
+          <option value="GBP">£ GBP (British Pound)</option>
+          <option value="JPY">¥ JPY (Japanese Yen)</option>
+          <option value="AUD">A$ AUD (Australian Dollar)</option>
+          <option value="CAD">C$ CAD (Canadian Dollar)</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Budget selector + Add User -->
     <div class="card header-card">
       <div class="budget-selector-group">
         <select id="budgetSelect" class="budget-select" onchange="onBudgetChange()">
-          <option disabled selected>Select Budget</option>
+          <option disabled selected>📊 Select a Budget</option>
         </select>
+        <button class="btn-primary" onclick="showCreateBudgetForm()" title="Create a new budget">
+          <i class="fas fa-plus"></i> New Budget
+        </button>
         <button id="addUserBtn" class="btn-icon" onclick="toggleAddUser()" style="display:none" title="Add user to budget">
           <i class="fas fa-user-plus"></i> Add Member
         </button>
       </div>
     </div>
 
-    <!-- Create budget (shown only when Create New is selected) -->
+    <!-- Create budget (shown only when clicking Create New button) -->
     <div class="card" id="createBudgetDiv" style="display:none">
       <h3>Create New Budget</h3>
       <div class="form-group">
         <input id="newBudgetName" placeholder="Budget name (e.g., Trip to Europe)" required>
       </div>
-      <button class="btn-primary" onclick="createBudget()"><i class="fas fa-plus"></i> Create</button>
+      <div class="button-group">
+        <button class="btn-primary" onclick="createBudget()"><i class="fas fa-plus"></i> Create</button>
+        <button class="btn-secondary" onclick="hideBudgetForm()"><i class="fas fa-times"></i> Cancel</button>
+      </div>
     </div>
 
     <!-- Add User interface -->

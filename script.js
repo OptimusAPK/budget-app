@@ -8,14 +8,31 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
+// Enable offline persistence for Firestore
+db.enablePersistence()
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore: Multiple tabs open');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore persistence not supported');
+    }
+  });
+
 let user = null;
 let budgetId = null;
 let unsubscribe = null;
 let currentTransactions = [];
+let selectedCurrency = localStorage.getItem("selectedCurrency") || "INR";
 
 // ---------- AUTH ----------
 function loginWithGoogle() { 
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => showError(err.message)); 
+  console.log("Attempting Google login...");
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(() => console.log("Google login successful"))
+    .catch(err => {
+      console.error("Google login error:", err.code, err.message);
+      showError("Google login failed: " + err.message);
+    });
 }
 
 function toggleEmail() { 
@@ -31,7 +48,13 @@ function emailLogin() {
     return;
   }
   
-  auth.signInWithEmailAndPassword(email, password).catch(err => showError(err.message)); 
+  console.log("Attempting email login for:", email);
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => console.log("Email login successful"))
+    .catch(err => {
+      console.error("Email login error:", err.code, err.message);
+      showError("Login failed: " + err.message);
+    });
 }
 
 function emailSignup() { 
@@ -48,7 +71,13 @@ function emailSignup() {
     return;
   }
   
-  auth.createUserWithEmailAndPassword(email, password).catch(err => showError(err.message)); 
+  console.log("Attempting signup for:", email);
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(() => console.log("Signup successful"))
+    .catch(err => {
+      console.error("Signup error:", err.code, err.message);
+      showError("Signup failed: " + err.message);
+    });
 }
 
 function logout() { 
@@ -58,6 +87,8 @@ function logout() {
 }
 
 auth.onAuthStateChanged(u => {
+  console.log("Auth state changed:", u ? "User logged in: " + u.email : "No user");
+  
   if (!u) { 
     document.getElementById("loginSection").style.display = "block"; 
     document.getElementById("appSection").style.display = "none"; 
@@ -66,16 +97,22 @@ auth.onAuthStateChanged(u => {
   }
 
   user = u;
+  console.log("Setting up user document for:", user.uid);
+  
   db.collection("users").doc(user.uid).set({ 
     uid: user.uid, 
     email: user.email, 
     name: user.displayName || user.email,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
+  }, { merge: true })
+  .catch(err => console.error("Error setting user doc:", err));
 
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("appSection").style.display = "block";
   document.getElementById("userInfo").innerText = "👋 Welcome, " + (user.displayName || user.email);
+  
+  // Set currency selector
+  document.getElementById("currencySelect").value = selectedCurrency;
 
   loadBudgets();
   loadUsers();
@@ -84,49 +121,53 @@ auth.onAuthStateChanged(u => {
 // ---------- BUDGET ----------
 function loadBudgets() {
   db.collection("budgets").where("members","array-contains",user.uid)
-    .orderBy("createdAt", "desc")
     .get()
     .then(snap => {
       const budgetSelect = document.getElementById("budgetSelect");
-      budgetSelect.innerHTML = `<option disabled>Select Budget</option>`;
+      budgetSelect.innerHTML = `<option disabled selected>📊 Select a Budget</option>`;
       let lastBudget = localStorage.getItem("lastBudgetId");
       let selectedBudgetSet = false;
 
+      // Collect and sort client-side for reliability
+      const budgets = [];
       snap.forEach(doc => {
+        budgets.push({id: doc.id, ...doc.data()});
+      });
+
+      // Sort by createdAt if available, otherwise keep document order
+      budgets.sort((a, b) => {
+        if(a.createdAt && b.createdAt) {
+          return b.createdAt.toDate() - a.createdAt.toDate();
+        }
+        return 0;
+      });
+
+      budgets.forEach(doc => {
         const opt = document.createElement("option");
         opt.value = doc.id;
-        opt.textContent = doc.data().name;
+        opt.textContent = doc.name;
         budgetSelect.appendChild(opt);
 
         if (doc.id === lastBudget) {
           budgetSelect.value = lastBudget;
           budgetId = lastBudget;
           selectedBudgetSet = true;
-          document.getElementById("currentBudget").innerText = "📊 " + doc.data().name;
+          document.getElementById("currentBudget").innerText = "📊 " + doc.name;
           document.getElementById("addUserBtn").style.display = "inline-flex";
-          listenTransactions();
         }
       });
-
-      budgetSelect.innerHTML += `<option value="new">➕ Create New Budget</option>`;
 
       if(selectedBudgetSet){
         listenTransactions();
       }
     })
-    .catch(err => showError("Failed to load budgets: " + err.message));
+    .catch(err => console.error("Failed to load budgets:", err));
 }
 
 function onBudgetChange() {
   const budgetSelect = document.getElementById("budgetSelect");
   
-  if(budgetSelect.value === "new"){ 
-    document.getElementById("createBudgetDiv").style.display = "block";
-    document.getElementById("addUserBtn").style.display = "none";
-    document.getElementById("summaryDiv").style.display = "none";
-    budgetId = null;
-    document.getElementById("currentBudget").innerText = "📝 Creating New Budget";
-  } else {
+  if(budgetSelect.value){ 
     document.getElementById("createBudgetDiv").style.display = "none";
     document.getElementById("addUserBtn").style.display = "inline-flex";
     budgetId = budgetSelect.value;
@@ -134,6 +175,17 @@ function onBudgetChange() {
     document.getElementById("currentBudget").innerText = "📊 " + budgetSelect.options[budgetSelect.selectedIndex].text;
     listenTransactions();
   }
+}
+
+function showCreateBudgetForm() {
+  document.getElementById("createBudgetDiv").style.display = "block";
+  document.getElementById("newBudgetName").focus();
+  document.getElementById("newBudgetName").value = "";
+}
+
+function hideBudgetForm() {
+  document.getElementById("createBudgetDiv").style.display = "none";
+  document.getElementById("newBudgetName").value = "";
 }
 
 // ---------- CREATE NEW BUDGET ----------
@@ -152,14 +204,23 @@ function createBudget() {
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   }).then(docRef => {
     document.getElementById("newBudgetName").value = "";
-    document.getElementById("createBudgetDiv").style.display = "none";
-    loadBudgets();
+    hideBudgetForm();
+    showSuccess("Budget created! Refreshing...");
     
-    // Auto-select the new budget
+    // Wait a moment for Firestore to sync, then reload
     setTimeout(() => {
-      document.getElementById("budgetSelect").value = docRef.id;
-      onBudgetChange();
-    }, 100);
+      loadBudgets();
+      
+      // Auto-select the new budget
+      setTimeout(() => {
+        document.getElementById("budgetSelect").value = docRef.id;
+        budgetId = docRef.id;
+        localStorage.setItem("lastBudgetId", docRef.id);
+        document.getElementById("currentBudget").innerText = "📊 " + newBudgetName;
+        document.getElementById("addUserBtn").style.display = "inline-flex";
+        listenTransactions();
+      }, 300);
+    }, 500);
   })
   .catch(err => showError("Failed to create budget: " + err.message));
 }
@@ -253,6 +314,7 @@ function listenTransactions(){
     
     let total = 0;
     const categoryTotals = {};
+    const symbol = getCurrencySymbol();
     
     txArray.forEach(t => {
       currentTransactions.push(t);
@@ -264,7 +326,7 @@ function listenTransactions(){
       row.innerHTML = `
         <td>${sanitizeHtml(t.text)}</td>
         <td><span class="category-badge">${t.category}</span></td>
-        <td>₹${t.amount.toFixed(2)}</td>
+        <td><strong>${symbol}${t.amount.toFixed(2)}</strong></td>
         <td>
           <div class="action-buttons">
             <button onclick="editTransaction('${t.id}')">✏️ Edit</button>
@@ -291,11 +353,12 @@ function updateSummary(total, categoryTotals) {
   }
   
   summaryDiv.style.display = "block";
+  const symbol = getCurrencySymbol();
   
   let html = `
     <div class="summary-item">
       <div class="summary-item-label">Total</div>
-      <div class="summary-item-value">₹${total.toFixed(2)}</div>
+      <div class="summary-item-value">${symbol}${total.toFixed(2)}</div>
     </div>
   `;
   
@@ -306,7 +369,7 @@ function updateSummary(total, categoryTotals) {
       html += `
         <div class="summary-item">
           <div class="summary-item-label">${cat}</div>
-          <div class="summary-item-value">₹${amt.toFixed(2)}</div>
+          <div class="summary-item-value">${symbol}${amt.toFixed(2)}</div>
         </div>
       `;
     });
@@ -405,6 +468,29 @@ function editTransaction(id) {
 }
 
 // ---------- UTILITIES ----------
+function getCurrencySymbol() {
+  const symbols = {
+    "INR": "₹",
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "JPY": "¥",
+    "AUD": "A$",
+    "CAD": "C$"
+  };
+  return symbols[selectedCurrency] || "₹";
+}
+
+function changeCurrency() {
+  selectedCurrency = document.getElementById("currencySelect").value;
+  localStorage.setItem("selectedCurrency", selectedCurrency);
+  
+  // Refresh transactions to show new currency
+  if(budgetId) {
+    listenTransactions();
+  }
+}
+
 function showError(message) {
   alert("❌ " + message);
 }
