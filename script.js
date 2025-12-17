@@ -174,6 +174,7 @@ function onBudgetChange() {
     localStorage.setItem("lastBudgetId", budgetId);
     document.getElementById("currentBudget").innerText = "📊 " + budgetSelect.options[budgetSelect.selectedIndex].text;
     listenTransactions();
+    loadBudgetMembers();
   }
 }
 
@@ -237,6 +238,59 @@ function loadUsers() {
     });
   })
   .catch(err => showError("Failed to load users: " + err.message));
+}
+
+function loadBudgetMembers() {
+  if(!budgetId) return;
+  
+  db.collection("budgets").doc(budgetId).get()
+    .then(doc => {
+      if(!doc.exists) return;
+      
+      const members = doc.data().members || [];
+      if(members.length === 0) {
+        document.getElementById("membersDiv").style.display = "none";
+        return;
+      }
+      
+      // Fetch all member details
+      Promise.all(
+        members.map(memberId => db.collection("users").doc(memberId).get())
+      ).then(snapshots => {
+        const membersList = document.getElementById("membersList");
+        membersList.innerHTML = "";
+        
+        snapshots.forEach((snap, index) => {
+          if(!snap.exists) return;
+          
+          const userData = snap.data();
+          const memberId = members[index];
+          const isOwner = userData.uid === doc.data().ownerId;
+          const isCurrentUser = userData.uid === user.uid;
+          
+          // Get initials for avatar
+          const name = userData.name || userData.email;
+          const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+          
+          const memberEl = document.createElement("div");
+          memberEl.className = "member-item";
+          memberEl.innerHTML = `
+            <div class="member-avatar">${initials}</div>
+            <div class="member-info">
+              <div class="member-name">${sanitizeHtml(name)}</div>
+              <div class="member-email">${sanitizeHtml(userData.email)}</div>
+            </div>
+            ${isOwner ? '<div class="member-badge">👑 Owner</div>' : ''}
+            ${isCurrentUser && !isOwner ? '<div class="member-badge">You</div>' : ''}
+          `;
+          membersList.appendChild(memberEl);
+        });
+        
+        document.getElementById("membersDiv").style.display = "block";
+      })
+      .catch(err => console.error("Error loading member details:", err));
+    })
+    .catch(err => showError("Failed to load budget members: " + err.message));
 }
 
 function toggleAddUser(){ 
