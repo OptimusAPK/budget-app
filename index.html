@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Collaborative Budget App</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div class="app-container">
 
-  <h2>💰 Anupam & Astha Budget App</h2>
+  <h2>Astha & Anupam 💰Budget App</h2>
 
   <!-- LOGIN -->
   <div id="loginSection" class="card">
@@ -28,53 +28,61 @@
 
   <p id="userInfo"></p>
 
-  <!-- APP (HIDDEN BY DEFAULT) -->
+  <!-- APP (hidden by default) -->
   <div id="appSection" style="display:none">
 
-    <div class="card">
+    <!-- Budget selector + Add User -->
+    <div class="card flex-row">
       <select id="budgetSelect" onchange="onBudgetChange()">
         <option disabled selected>Select Budget</option>
       </select>
+      <button id="addUserBtn" onclick="toggleAddUser()" style="display:none">➕ Add User</button>
     </div>
 
-    <div class="card">
+    <!-- Create budget (shown only when Create New is selected) -->
+    <div class="card" id="createBudgetDiv" style="display:none">
       <input id="newBudgetName" placeholder="New Budget Name">
       <button onclick="createBudget()">Create Budget</button>
     </div>
 
-    <div class="card">
+    <!-- Add User interface -->
+    <div class="card" id="addUserDiv" style="display:none">
       <select id="usersDropdown">
-        <option disabled selected>Add user</option>
+        <option disabled selected>Select user to add</option>
       </select>
       <button onclick="addUser()">Add User</button>
     </div>
 
-    <h3 id="currentBudget">No Budget Selected</h3>
+    <!-- Add transaction (moved above table) -->
+    <div class="card" id="addTransactionDiv">
+      <h3>Add Transaction</h3>
+      <div class="flex-row">
+        <input id="desc" placeholder="Description">
+        <select id="cat">
+          <option>Food</option>
+          <option>Rent</option>
+          <option>Travel</option>
+          <option>Other</option>
+        </select>
+        <input id="amt" type="number" placeholder="Amount">
+        <button onclick="addTransaction()">➕</button>
+      </div>
+    </div>
 
+    <!-- Transactions Table -->
     <div class="card">
+      <h3 id="currentBudget">No Budget Selected</h3>
       <table>
         <thead>
           <tr>
             <th>Description</th>
             <th>Category</th>
             <th>Amount</th>
-            <th></th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="transactions"></tbody>
       </table>
-    </div>
-
-    <div class="card">
-      <input id="desc" placeholder="Description">
-      <select id="cat">
-        <option>Food</option>
-        <option>Rent</option>
-        <option>Travel</option>
-        <option>Other</option>
-      </select>
-      <input id="amt" type="number" placeholder="Amount">
-      <button onclick="addTransaction()">Add Transaction</button>
     </div>
 
     <button class="logout" onclick="logout()">Logout</button>
@@ -86,7 +94,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script src="script.js"></script>
 </body>
 </html>
