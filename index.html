@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Collaborative Budget App</title>
+  <title>Funky Collaborative Budget App</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h2>Collaborative Budget App</h2>
+  <h2>💰Anupam & Astha Budget App</h2>
 
-  <!-- Login section -->
-  <div id="loginSection">
+  <!-- Login Section -->
+  <div id="loginSection" class="card">
     <button onclick="loginWithGoogle()">Login with Google</button>
     <button onclick="showEmailLogin()">Login with Email</button>
 
@@ -24,11 +25,11 @@
 
   <p id="userInfo"></p>
 
-  <!-- Main app section -->
-  <div id="appSection" style="display:none;">
+  <!-- Main App Section -->
+  <div id="appSection" style="display:none; width:100%;">
 
     <!-- Budget selection -->
-    <div class="form">
+    <div class="card form">
       <label for="budgetSelect">Select Budget:</label>
       <select id="budgetSelect" onchange="handleBudgetChange()">
         <option value="" disabled selected>Loading budgets...</option>
@@ -36,13 +37,13 @@
     </div>
 
     <!-- New budget creation -->
-    <div class="form" id="newBudgetSection" style="display:none;">
+    <div class="card form" id="newBudgetSection" style="display:none;">
       <input type="text" id="newBudgetName" placeholder="Enter new budget name" />
       <button onclick="createNewBudget()">Create Budget</button>
     </div>
 
     <!-- Add user to budget -->
-    <div class="form" id="addUserSection" style="display:none;">
+    <div class="card form" id="addUserSection" style="display:none;">
       <select id="allUsersSelect">
         <option value="" disabled selected>Select user to add</option>
       </select>
@@ -51,21 +52,23 @@
 
     <p><strong>Current Budget:</strong> <span id="currentBudget">None</span></p>
 
-    <!-- Transactions table -->
-    <table>
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="transactionsTableBody"></tbody>
-    </table>
+    <!-- Transactions Table -->
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsTableBody"></tbody>
+      </table>
+    </div>
 
-    <!-- Add transaction form -->
-    <div class="form" style="margin-top: 15px;">
+    <!-- Add Transaction Form -->
+    <div class="card form">
       <input type="text" id="text" placeholder="Description" />
       <select id="category">
         <option value="Food">🍔 Food</option>

@@ -1,26 +1,145 @@
+/* Base */
 body {
-  font-family: Arial, sans-serif;
-  max-width: 600px;
-  margin: auto;
-  padding: 10px;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #333;
 }
-.form {
-  margin-bottom: 10px;
+
+h2 {
+  margin-top: 20px;
+  font-size: 2em;
+  color: #1a1a1a;
+  text-align: center;
+  text-shadow: 1px 1px 5px rgba(0,0,0,0.1);
 }
-input, select, button {
-  padding: 6px;
-  margin-right: 6px;
-}
-table {
-  border-collapse: collapse;
+
+/* Card wrapper */
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 15px 0;
   width: 100%;
-  margin-top: 10px;
+  max-width: 600px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  animation: fadeIn 0.8s ease;
 }
+
+/* Form styling */
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+input, select, button {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 1em;
+  transition: all 0.3s ease;
+}
+
+input, select {
+  flex: 1;
+  min-width: 120px;
+}
+
+input:focus, select:focus {
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+/* Buttons */
+button {
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 th, td {
-  border: 1px solid #aaa;
-  padding: 8px;
+  padding: 12px;
   text-align: left;
 }
-button {
-  cursor: pointer;
+
+thead {
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: #fff;
+  font-weight: bold;
+}
+
+tbody tr {
+  border-bottom: 1px solid #eee;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+tbody tr:hover {
+  background: rgba(99, 132, 255, 0.1);
+  transform: scale(1.02);
+}
+
+td button {
+  background: #ff6b6b;
+  font-size: 0.9em;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+td button:hover {
+  background: #ff3b3b;
+  transform: scale(1.1);
+}
+
+/* Login section */
+#loginSection {
+  margin: 30px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+#loginSection button {
+  width: 200px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  0% {opacity: 0; transform: translateY(-10px);}
+  100% {opacity: 1; transform: translateY(0);}
+}
+
+/* Mobile */
+@media(max-width: 500px) {
+  .form {
+    flex-direction: column;
+  }
+
+  input, select, button {
+    width: 100%;
+  }
 }
