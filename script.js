@@ -1,12 +1,13 @@
- const firebaseConfig = {
-    apiKey: "AIzaSyAE0DpuMOtf6gcMTNTh22jOPaovXSzKYBU",
-    authDomain: "budget-app-193ef.firebaseapp.com",
-    projectId: "budget-app-193ef",
-    storageBucket: "budget-app-193ef.firebasestorage.app",
-    messagingSenderId: "875342270120",
-    appId: "1:875342270120:web:e5304dae0d056552217c9d",
-    measurementId: "G-YYQDZR9YHV"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyAE0DpuMOtf6gcMTNTh22jOPaovXSzKYBU",
+  authDomain: "budget-app-193ef.firebaseapp.com",
+  projectId: "budget-app-193ef",
+  storageBucket: "budget-app-193ef.appspot.com",    // <-- fixed here
+  messagingSenderId: "875342270120",
+  appId: "1:875342270120:web:e5304dae0d056552217c9d",
+  measurementId: "G-YYQDZR9YHV"
+};
+
 
 firebase.initializeApp(firebaseConfig);
 
