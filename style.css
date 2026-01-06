@@ -444,34 +444,41 @@ button {
 /* Summary */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 12px;
   margin-top: 15px;
-  text-align: center;
+  width: 100%;
+  overflow-x: auto;
 }
 
 .summary-item {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 20px;
+  padding: 16px 12px;
   border-radius: 12px;
   box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .summary-item-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   opacity: 0.9;
   margin-bottom: 5px;
+  word-break: break-word;
 }
 
 .summary-item-value {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
+  word-break: break-word;
 }
 
 /* Table */
 .transactions-card {
   text-align: left;
+  overflow-x: auto;
+  padding: 0;
 }
 
 .card-header {
@@ -480,10 +487,14 @@ button {
   align-items: center;
   margin-bottom: 20px;
   gap: 10px;
+  padding: 25px 25px 0 25px;
+  flex-wrap: wrap;
 }
 
 .card-header h3 {
   margin: 0;
+  flex: 1;
+  min-width: 200px;
 }
 
 .transaction-count {
@@ -493,6 +504,7 @@ button {
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .empty-state {
@@ -512,10 +524,16 @@ button {
   color: #aaa;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+  padding: 0 25px 25px 25px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 0;
+  min-width: 500px;
 }
 
 thead {
@@ -529,6 +547,7 @@ th {
   font-weight: 600;
   font-size: 0.9rem;
   border-bottom: 2px solid #e0e0e0;
+  white-space: nowrap;
 }
 
 td {
@@ -536,6 +555,8 @@ td {
   text-align: left;
   color: #555;
   border-bottom: 1px solid #f0f0f0;
+  word-break: break-word;
+  max-width: 200px;
 }
 
 tbody tr {
@@ -553,6 +574,8 @@ tbody tr:last-child td {
 .action-buttons {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  white-space: nowrap;
 }
 
 .action-buttons button {
@@ -564,6 +587,7 @@ tbody tr:last-child td {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .action-buttons button:hover {
@@ -608,22 +632,32 @@ tbody tr:last-child td {
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .app-container {
     padding: 15px;
-  }
-
-  .header-section h1 {
-    font-size: 2rem;
   }
 
   .card {
     padding: 20px;
     border-radius: 12px;
+    margin: 10px 0;
   }
 
-  .login-card {
-    padding: 25px;
+  .header-section h1 {
+    font-size: 1.8rem;
+  }
+
+  .budget-selector-group {
+    flex-direction: column;
+  }
+
+  .budget-select {
+    width: 100%;
+  }
+
+  .budget-selector-group .btn-primary,
+  .budget-selector-group .btn-icon {
+    width: 100%;
   }
 
   .form-row {
@@ -631,18 +665,145 @@ tbody tr:last-child td {
   }
 
   .summary-grid {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
   }
 
-  table {
-    font-size: 13px;
+  .summary-item {
+    padding: 12px 8px;
+  }
+
+  .summary-item-label {
+    font-size: 0.75rem;
+  }
+
+  .summary-item-value {
+    font-size: 1rem;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-header h3 {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .transaction-count {
+    align-self: flex-start;
+  }
+
+  .table-wrapper {
+    padding: 0 20px 20px 20px;
+    margin: 0 -20px -20px -20px;
+    overflow-x: auto;
   }
 
   th, td {
     padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .action-buttons button {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .members-list {
+    grid-template-columns: 1fr;
   }
 
   .button-group {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .button-group button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    padding: 10px;
+  }
+
+  .header-section h1 {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 15px;
+    border-radius: 10px;
+    margin: 8px 0;
+  }
+
+  .login-card {
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-item {
+    padding: 10px 6px;
+  }
+
+  .summary-item-label {
+    font-size: 0.7rem;
+  }
+
+  .summary-item-value {
+    font-size: 0.95rem;
+  }
+
+  .table-wrapper {
+    padding: 0 15px 15px 15px;
+    margin: 0 -15px -15px -15px;
+  }
+
+  th, td {
+    padding: 8px;
+    font-size: 0.75rem;
+  }
+
+  .member-item {
+    padding: 10px 12px;
+  }
+
+  .member-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+
+  .member-name {
+    font-size: 0.8rem;
+  }
+
+  .member-email {
+    font-size: 0.7rem;
+  }
+
+  .card-header h3 {
+    font-size: 1rem;
+  }
+
+  button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .btn-icon {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }

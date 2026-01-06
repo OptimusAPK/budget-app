@@ -157,17 +157,19 @@
         <i class="fas fa-inbox"></i>
         <p>No expenses yet. Add your first expense above!</p>
       </div>
-      <table id="transactionsTable" style="display:none">
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="transactions"></tbody>
-      </table>
+      <div class="table-wrapper">
+        <table id="transactionsTable" style="display:none">
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="transactions"></tbody>
+        </table>
+      </div>
     </div>
 
     <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
